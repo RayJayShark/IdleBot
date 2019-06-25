@@ -10,4 +10,8 @@
       <PackageReference Include="dotenv.net" Version="1.0.4" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Modules" />
+    </ItemGroup>
+
 </Project>

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Discord;
+using Discord.Commands;
 using Discord.WebSocket;
 using dotenv.net;
 
@@ -10,8 +12,9 @@ namespace IdleGame
 {
     class Program
     {
-        private DiscordSocketClient _client;
-        
+        private static DiscordSocketClient _client;
+        private CommandHandler _commands;
+
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
         {
@@ -23,13 +26,18 @@ namespace IdleGame
             }
             DotEnv.Config(false);
             
+            
+            
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info
             });
+            
+            _commands = new CommandHandler(_client, new CommandService());
+            await _commands.InstallCommandsAsync();
 
             _client.Log += Log;
-            
+
             await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
             await _client.StartAsync();
 
@@ -42,9 +50,10 @@ namespace IdleGame
             return Task.CompletedTask;
         }
 
-        public async void Shutdown()
+        public static async Task Shutdown()
         {
             await _client.StopAsync();
+            Environment.Exit(0);
         }
     }
 }
