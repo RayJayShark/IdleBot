@@ -8,12 +8,14 @@ using Discord.Commands;
 using Discord.WebSocket;
 using dotenv.net;
 
+
 namespace IdleGame
 {
     class Program
     {
         private static DiscordSocketClient _client;
         private CommandHandler _commands;
+        private string connStr = "server=localhost;user=root;database=idlegame;port=3306";
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
