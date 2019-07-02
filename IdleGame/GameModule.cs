@@ -1,7 +1,9 @@
 using System;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Org.BouncyCastle.Crypto.Engines;
 
 namespace IdleGame
 {
@@ -14,14 +16,21 @@ namespace IdleGame
             var guildUser = (IGuildUser) Context.User;
             string user = guildUser.Nickname;
             int success = Program.AddPlayer(Context.User.Id, user);
-            if (success > 0)
+
+            switch (success)
             {
-                await ReplyAsync($"Player \"{user}\" created successfully. Enjoy your journey!");
-            }
-            else
-            {
-                await ReplyAsync($"There was an error creating the player. Sadface");
+                case 0:
+                    await ReplyAsync($"Player \"{user}\" created successfully. Enjoy your journey!");
+                    break;
+                case 1:
+                    await ReplyAsync("You already have a character!");
+                    break;
+                case 2:
+                    await ReplyAsync("There was an error creating the player. Sadface");
+                    break;
             }
         }
+        
+        
     }
 }

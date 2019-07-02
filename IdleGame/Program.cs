@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using System.Timers;
+using Dapper;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
@@ -23,6 +27,7 @@ namespace IdleGame
         private string connStr = "server=localhost;user=root;database=idlegame;port=3306";
         private static MySqlConnection conn;
         private static MySqlCommand cmd;
+        private static MySqlDataReader reader;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
@@ -38,8 +43,10 @@ namespace IdleGame
             conn = new MySqlConnection(connStr);
             try
             {
-                Console.WriteLine("Connecting to MySQL...");
+                Console.WriteLine("Testing MySQL...");
                 conn.Open();
+                conn.Close();
+                Console.WriteLine("Test Complete!");
             }
             catch (Exception ex)
             {
@@ -61,6 +68,11 @@ namespace IdleGame
             await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
             await _client.StartAsync();
 
+            var expTimer = new Timer();
+            expTimer.Elapsed += GiveExp;
+            expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_TIMER")) * 60 * 1000;
+            expTimer.Enabled = true;
+
             await Task.Delay(-1);
         }
         
@@ -76,22 +88,82 @@ namespace IdleGame
             conn.Close();
             Environment.Exit(0);
         }
-        
+
         // SQL functions
         public static int AddPlayer(ulong id, string name)
         {
-            string sql = $"INSERT INTO player (ID, Name) VALUES ('{id}','{name}')";
+            string sql = $"SELECT COUNT(ID) FROM player WHERE ID = {id}";
             try
             {
+                conn.Open();
                 cmd = new MySqlCommand(sql, conn);
-                cmd.ExecuteNonQuery();
-                return 1;
+                reader = cmd.ExecuteReader();
+                reader.Read();
+                if (int.Parse(reader[0].ToString()) != 0)
+                {
+                    conn.Close();
+                    return 1;
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
+            }
+            conn.Close();
+            sql = $"INSERT INTO player (ID, Name) VALUES ('{id}','{name}')";
+            try
+            {
+                conn.Open();
+                cmd = new MySqlCommand(sql, conn);
+                cmd.ExecuteNonQuery();
+                conn.Close();
                 return 0;
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                return 2;
+            }
+        }
+        
+        private static void GiveExp(object source, ElapsedEventArgs e)
+        {
+            Dictionary<ulong, int> players = new Dictionary<ulong, int>();
+            
+            try
+            {
+                conn.Open();
+                cmd = new MySqlCommand("SELECT ID, EXP FROM player", conn);
+                reader = cmd.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    players.Add(ulong.Parse(reader[0].ToString()), int.Parse(reader[1].ToString()));
+                }
+
+                conn.Close();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            try
+            {
+                conn.Open();
+                foreach (KeyValuePair<ulong, int> p in players)
+                {
+                    cmd = new MySqlCommand($"UPDATE player SET EXP = {p.Value + 1} WHERE ID = {p.Key}", conn);
+                    cmd.ExecuteNonQuery();
+                }
+                Console.WriteLine("EXP given!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
+            conn.Close();
         }
     }
 }
