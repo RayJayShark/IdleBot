@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -30,8 +31,18 @@ namespace IdleGame
             if (message == null) return;
 
             int argPos = 0;
+
+            char prefix;
+            if (Environment.GetEnvironmentVariable("COMMAND_PREFIX")[0] == null)
+            {
+                prefix = '+';
+            }
+            else
+            {
+                prefix = Environment.GetEnvironmentVariable("COMMAND_PREFIX")[0];
+            }
             
-            if (!(message.HasCharPrefix('+', ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot)
+            if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot)
                 return;
             
             var context = new SocketCommandContext(_client, message);
