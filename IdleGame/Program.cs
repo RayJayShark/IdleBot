@@ -92,7 +92,7 @@ namespace IdleGame
         // SQL functions
         public static int AddPlayer(ulong id, string name)
         {
-            string sql = $"SELECT COUNT(ID) FROM player WHERE ID = {id}";
+            string sql = $"SELECT COUNT(Id) FROM player WHERE Id = {id}";
             try
             {
                 conn.Open();
@@ -110,7 +110,7 @@ namespace IdleGame
                 Console.WriteLine(ex.ToString());
             }
             conn.Close();
-            sql = $"INSERT INTO player (ID, Name) VALUES ('{id}','{name}')";
+            sql = $"INSERT INTO player (Id, Name) VALUES ('{id}','{name}')";
             try
             {
                 conn.Open();
@@ -133,7 +133,7 @@ namespace IdleGame
             try
             {
                 conn.Open();
-                cmd = new MySqlCommand("SELECT ID, EXP FROM player", conn);
+                cmd = new MySqlCommand("SELECT Id, Exp FROM player", conn);
                 reader = cmd.ExecuteReader();
 
                 while (reader.Read())
@@ -153,10 +153,10 @@ namespace IdleGame
                 conn.Open();
                 foreach (KeyValuePair<ulong, int> p in players)
                 {
-                    cmd = new MySqlCommand($"UPDATE player SET EXP = {p.Value + Environment.GetEnvironmentVariable("IDLE_EXP")} WHERE ID = {p.Key}", conn);
+                    cmd = new MySqlCommand($"UPDATE player SET Exp = {p.Value + Environment.GetEnvironmentVariable("IDLE_EXP")} WHERE Id = {p.Key}", conn);
                     cmd.ExecuteNonQuery();
                 }
-                Console.WriteLine("EXP given!");
+                Console.WriteLine("Exp given!");
             }
             catch (Exception ex)
             {
