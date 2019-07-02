@@ -153,7 +153,7 @@ namespace IdleGame
                 conn.Open();
                 foreach (KeyValuePair<ulong, int> p in players)
                 {
-                    cmd = new MySqlCommand($"UPDATE player SET EXP = {p.Value + 1} WHERE ID = {p.Key}", conn);
+                    cmd = new MySqlCommand($"UPDATE player SET EXP = {p.Value + Environment.GetEnvironmentVariable("IDLE_EXP")} WHERE ID = {p.Key}", conn);
                     cmd.ExecuteNonQuery();
                 }
                 Console.WriteLine("EXP given!");
