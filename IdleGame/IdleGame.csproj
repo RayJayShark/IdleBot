@@ -7,7 +7,6 @@
 
     <ItemGroup>
       <PackageReference Include="Dapper" Version="1.60.6" />
-      <PackageReference Include="Dapper.SqlBuilder" Version="1.60.1" />
       <PackageReference Include="Discord.Net" Version="2.1.1" />
       <PackageReference Include="dotenv.net" Version="1.0.4" />
       <PackageReference Include="MySql.Data" Version="8.0.16" />

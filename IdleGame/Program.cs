@@ -28,7 +28,7 @@ namespace IdleGame
         private static MySqlCommand _cmd;
         private static MySqlDataReader _reader;
         private string _connStr;
-        public static Dictionary<string, Player> PlayerList;
+        public static Dictionary<ulong, Player> PlayerList;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
@@ -96,44 +96,59 @@ namespace IdleGame
             _conn.Close();
             Environment.Exit(0);
         }
-
-        // SQL functions
-        private static Dictionary<string, Player> QueryPlayers()
-        {
-            var players = _conn.Query<Player>("SELECT * FROM player");
-            Dictionary<string, Player> TempPlayerList = new Dictionary<string, Player>();
-            foreach (var p in players)
-            {
-                TempPlayerList.Add(p.Name, p);
-            }
-
-            return TempPlayerList;
-        }
-
+        
         public static int AddPlayer(ulong id, string name)
         {
-            if (PlayerList.ContainsKey(name))
+            if (PlayerList.ContainsKey(id))
             {
                 return 1;
             }
-            PlayerList.Add(name, new Player(id, name));
+            PlayerList.Add(id, new Player(id, name));
+            _conn.Execute($"INSERT INTO players VALUES(Id = {id}, Name = '{name}')");
             return 0;
+        }
+
+        // SQL functions
+        private static Dictionary<ulong, Player> QueryPlayers()
+        {
+            Dictionary<ulong, Player> tempPlayerList = new Dictionary<ulong, Player>();
+            var players = _conn.Query<Player>("SELECT * FROM player");
+            foreach (var p in players)
+            {
+                tempPlayerList.Add(p.Id, p);
+            }
+
+            return tempPlayerList;
+        }
+
+        private static void UpdateDatabase()
+        {
+            foreach (var p in PlayerList)
+            {
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, MaxHp = {p.Value.MaxHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp} WHERE Id = {p.Key}");
+            }
+            Console.WriteLine("Database updated");
         }
 
         private static void GiveExp(object source, ElapsedEventArgs e)
         {
             foreach (var p in PlayerList)
             {
-                PlayerList[p.Key].Exp += 1;
-                if (PlayerList[p.Key].LevelUp())
+                var guild = _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
+                var user = guild.GetUser(p.Value.Id);
+                if (user.VoiceState.HasValue && user.VoiceChannel.Id != guild.AFKChannel.Id)
                 {
-                    _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
-                        .GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
-                        .SendMessageAsync($"{p.Key} has leveled up! They are now Level {PlayerList[p.Key].Level}");
-
+                    PlayerList[p.Key].Exp += 1;
+                    if (PlayerList[p.Key].LevelUp())
+                    {
+                        guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                            .SendMessageAsync(
+                                $"{p.Value.Name} has leveled up! They are now Level {PlayerList[p.Key].Level}");
+                    }
                 }
             }
             Console.WriteLine("Exp Given!");
+            UpdateDatabase();
         }
     }
 }
