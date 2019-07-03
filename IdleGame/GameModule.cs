@@ -17,14 +17,13 @@ namespace IdleGame
             string user = guildUser.Nickname;
             int success = Program.AddPlayer(Context.User.Id, user);
 
-            switch (success)
+            if (success == 0)
             {
-                case 0:
-                    await ReplyAsync($"Player \"{user}\" created successfully. Enjoy your journey!");
-                    break;
-                case 1:
-                    await ReplyAsync("You already have a character!");
-                    break;
+                await ReplyAsync($"Player \"{user}\" created successfully. Enjoy your journey!");
+            }
+            else
+            {
+                await ReplyAsync("You already have a character!");
             }
         }
         

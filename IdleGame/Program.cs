@@ -93,10 +93,11 @@ namespace IdleGame
         public static async Task Shutdown()
         {
             await _client.StopAsync();
-            _conn.Close();
+            UpdateDatabase();
             Environment.Exit(0);
         }
-        
+
+        // SQL functions
         public static int AddPlayer(ulong id, string name)
         {
             if (PlayerList.ContainsKey(id))
@@ -107,8 +108,7 @@ namespace IdleGame
             _conn.Execute($"INSERT INTO players VALUES(Id = {id}, Name = '{name}')");
             return 0;
         }
-
-        // SQL functions
+        
         private static Dictionary<ulong, Player> QueryPlayers()
         {
             Dictionary<ulong, Player> tempPlayerList = new Dictionary<ulong, Player>();
