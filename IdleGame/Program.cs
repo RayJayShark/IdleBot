@@ -78,7 +78,7 @@ namespace IdleGame
 
             var expTimer = new Timer();
             expTimer.Elapsed += GiveExp;
-            expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_TIMER")) * 60 * 1000;
+            expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_TIMER")) * 1000;
             expTimer.Enabled = true;
 
             await Task.Delay(-1);
@@ -100,83 +100,40 @@ namespace IdleGame
         // SQL functions
         private static Dictionary<string, Player> QueryPlayers()
         {
-            
-        } 
-        
+            var players = _conn.Query<Player>("SELECT * FROM player");
+            Dictionary<string, Player> TempPlayerList = new Dictionary<string, Player>();
+            foreach (var p in players)
+            {
+                TempPlayerList.Add(p.Name, p);
+            }
+
+            return TempPlayerList;
+        }
+
         public static int AddPlayer(ulong id, string name)
         {
-            string sql = $"SELECT COUNT(Id) FROM player WHERE Id = {id}";
-            try
+            if (PlayerList.ContainsKey(name))
             {
-                _conn.Open();
-                _cmd = new MySqlCommand(sql, _conn);
-                _reader = _cmd.ExecuteReader();
-                _reader.Read();
-                if (int.Parse(_reader[0].ToString()) != 0)
-                {
-                    _conn.Close();
-                    return 1;
-                }
+                return 1;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-            _conn.Close();
-            sql = $"INSERT INTO player (Id, Name) VALUES ('{id}','{name}')";
-            try
-            {
-                _conn.Open();
-                _cmd = new MySqlCommand(sql, _conn);
-                _cmd.ExecuteNonQuery();
-                _conn.Close();
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                return 2;
-            }
+            PlayerList.Add(name, new Player(id, name));
+            return 0;
         }
-        
+
         private static void GiveExp(object source, ElapsedEventArgs e)
         {
-            Dictionary<ulong, int> players = new Dictionary<ulong, int>();
-            
-            try
+            foreach (var p in PlayerList)
             {
-                _conn.Open();
-                _cmd = new MySqlCommand("SELECT Id, Exp FROM player", _conn);
-                _reader = _cmd.ExecuteReader();
-
-                while (_reader.Read())
+                PlayerList[p.Key].Exp += 1;
+                if (PlayerList[p.Key].LevelUp())
                 {
-                    players.Add(ulong.Parse(_reader[0].ToString()), int.Parse(_reader[1].ToString()));
+                    _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
+                        .GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                        .SendMessageAsync($"{p.Key} has leveled up! They are now Level {PlayerList[p.Key].Level}");
+
                 }
-
-                _conn.Close();
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
-            try
-            {
-                _conn.Open();
-                foreach (KeyValuePair<ulong, int> p in players)
-                {
-                    _cmd = new MySqlCommand($"UPDATE player SET Exp = {p.Value + Environment.GetEnvironmentVariable("IDLE_EXP")} WHERE Id = {p.Key}", _conn);
-                    _cmd.ExecuteNonQuery();
-                }
-                Console.WriteLine("Exp given!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-
-            _conn.Close();
+            Console.WriteLine("Exp Given!");
         }
     }
 }

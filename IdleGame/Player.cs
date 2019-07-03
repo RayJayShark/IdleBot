@@ -4,11 +4,11 @@ namespace IdleGame
     {
         public ulong Id;
         public string Name;
-        public int CurHp;
-        public int MaxHp;
-        public int Money;
-        public int Level;
-        public int Exp;
+        public uint CurHp;
+        public uint MaxHp;
+        public uint Money;
+        public uint Level;
+        public uint Exp;
 
         public Player(ulong Id, string Name)
         {
@@ -21,7 +21,7 @@ namespace IdleGame
             Exp = 0;
         }
 
-        public Player(ulong Id, string Name, int CurHp, int MaxHp, int Money, int Level, int Exp)
+        public Player(ulong Id, string Name, uint CurHp, uint MaxHp, uint Money, uint Level, uint Exp)
         {
             this.Id = Id;
             this.Name = Name;

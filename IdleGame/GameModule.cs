@@ -25,9 +25,6 @@ namespace IdleGame
                 case 1:
                     await ReplyAsync("You already have a character!");
                     break;
-                case 2:
-                    await ReplyAsync("There was an error creating the player. Sadface");
-                    break;
             }
         }
         
