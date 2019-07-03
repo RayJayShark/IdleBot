@@ -33,13 +33,13 @@ namespace IdleGame
             int argPos = 0;
 
             char prefix;
-            if (Environment.GetEnvironmentVariable("COMMAND_PREFIX")[0] == null)
-            {
-                prefix = '+';
-            }
-            else
+            try
             {
                 prefix = Environment.GetEnvironmentVariable("COMMAND_PREFIX")[0];
+            }
+            catch (Exception ex)
+            {
+                prefix = '+';
             }
             
             if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot)

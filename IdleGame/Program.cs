@@ -24,10 +24,11 @@ namespace IdleGame
     {
         private static DiscordSocketClient _client;
         private CommandHandler _commands;
-        private string connStr = "server=localhost;user=root;database=idlegame;port=3306";
-        private static MySqlConnection conn;
-        private static MySqlCommand cmd;
-        private static MySqlDataReader reader;
+        private static MySqlConnection _conn;
+        private static MySqlCommand _cmd;
+        private static MySqlDataReader _reader;
+        private string _connStr;
+        public static Dictionary<string, Player> PlayerList;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
@@ -39,13 +40,19 @@ namespace IdleGame
                 return;
             }
             DotEnv.Config(false);
+            
+            _connStr = $"server={Environment.GetEnvironmentVariable("MYSQL_SERVER")};" +
+                      $"user={Environment.GetEnvironmentVariable("MYSQL_USER")};" +
+                      $"password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD")};" +
+                      $"database={Environment.GetEnvironmentVariable("MYSQL_DATABASE")};" +
+                      $"port={Environment.GetEnvironmentVariable("MYSQL_PORT")}";
 
-            conn = new MySqlConnection(connStr);
+            _conn = new MySqlConnection(_connStr);
             try
             {
                 Console.WriteLine("Testing MySQL...");
-                conn.Open();
-                conn.Close();
+                _conn.Open();
+                _conn.Close();
                 Console.WriteLine("Test Complete!");
             }
             catch (Exception ex)
@@ -53,7 +60,8 @@ namespace IdleGame
                 Console.WriteLine(ex.ToString());
                 Environment.Exit(1);
             }
-            
+
+            PlayerList = QueryPlayers();
             
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -85,23 +93,28 @@ namespace IdleGame
         public static async Task Shutdown()
         {
             await _client.StopAsync();
-            conn.Close();
+            _conn.Close();
             Environment.Exit(0);
         }
 
         // SQL functions
+        private static Dictionary<string, Player> QueryPlayers()
+        {
+            
+        } 
+        
         public static int AddPlayer(ulong id, string name)
         {
             string sql = $"SELECT COUNT(Id) FROM player WHERE Id = {id}";
             try
             {
-                conn.Open();
-                cmd = new MySqlCommand(sql, conn);
-                reader = cmd.ExecuteReader();
-                reader.Read();
-                if (int.Parse(reader[0].ToString()) != 0)
+                _conn.Open();
+                _cmd = new MySqlCommand(sql, _conn);
+                _reader = _cmd.ExecuteReader();
+                _reader.Read();
+                if (int.Parse(_reader[0].ToString()) != 0)
                 {
-                    conn.Close();
+                    _conn.Close();
                     return 1;
                 }
             }
@@ -109,14 +122,14 @@ namespace IdleGame
             {
                 Console.WriteLine(ex.ToString());
             }
-            conn.Close();
+            _conn.Close();
             sql = $"INSERT INTO player (Id, Name) VALUES ('{id}','{name}')";
             try
             {
-                conn.Open();
-                cmd = new MySqlCommand(sql, conn);
-                cmd.ExecuteNonQuery();
-                conn.Close();
+                _conn.Open();
+                _cmd = new MySqlCommand(sql, _conn);
+                _cmd.ExecuteNonQuery();
+                _conn.Close();
                 return 0;
             }
             catch (Exception ex)
@@ -132,16 +145,16 @@ namespace IdleGame
             
             try
             {
-                conn.Open();
-                cmd = new MySqlCommand("SELECT Id, Exp FROM player", conn);
-                reader = cmd.ExecuteReader();
+                _conn.Open();
+                _cmd = new MySqlCommand("SELECT Id, Exp FROM player", _conn);
+                _reader = _cmd.ExecuteReader();
 
-                while (reader.Read())
+                while (_reader.Read())
                 {
-                    players.Add(ulong.Parse(reader[0].ToString()), int.Parse(reader[1].ToString()));
+                    players.Add(ulong.Parse(_reader[0].ToString()), int.Parse(_reader[1].ToString()));
                 }
 
-                conn.Close();
+                _conn.Close();
             }
             catch (Exception ex)
             {
@@ -150,11 +163,11 @@ namespace IdleGame
 
             try
             {
-                conn.Open();
+                _conn.Open();
                 foreach (KeyValuePair<ulong, int> p in players)
                 {
-                    cmd = new MySqlCommand($"UPDATE player SET Exp = {p.Value + Environment.GetEnvironmentVariable("IDLE_EXP")} WHERE Id = {p.Key}", conn);
-                    cmd.ExecuteNonQuery();
+                    _cmd = new MySqlCommand($"UPDATE player SET Exp = {p.Value + Environment.GetEnvironmentVariable("IDLE_EXP")} WHERE Id = {p.Key}", _conn);
+                    _cmd.ExecuteNonQuery();
                 }
                 Console.WriteLine("Exp given!");
             }
@@ -163,7 +176,7 @@ namespace IdleGame
                 Console.WriteLine(ex.ToString());
             }
 
-            conn.Close();
+            _conn.Close();
         }
     }
 }

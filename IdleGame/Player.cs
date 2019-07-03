@@ -38,10 +38,10 @@ namespace IdleGame
             {
                 Level++;
                 Exp = 0;
-                return true;        // Leveled Up!
+                return true;    // Leveled Up!
             }
 
-            return false;            // Not enough Exp to level
+            return false;       // Not enough Exp to level
         }
         
         
