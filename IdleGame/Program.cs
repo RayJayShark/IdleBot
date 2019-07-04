@@ -155,7 +155,7 @@ namespace IdleGame
                     {
                         guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
                             .SendMessageAsync(
-                                $"{p.Value.Name} has leveled up! They are now Level {PlayerList[p.Key].Level}");
+                                $"{_client.GetUser(p.Key).Mention} has leveled up! They are now Level {PlayerList[p.Key].Level}");
                     }
                 }
             }
