@@ -26,7 +26,29 @@ namespace IdleGame
                 await ReplyAsync("You already have a character!");
             }
         }
-        
+
+        [Command("level")]
+        public async Task CheckLevel(string name = "")
+        {
+            Player player;
+            if (name.Equals(""))
+            {
+                player = Program.PlayerList[Context.User.Id];
+                await ReplyAsync($"You are currently Level {player.Level} with {player.Exp} XP");
+            }
+            else
+            {
+                player = Program.FindPlayer(name);
+                if (player.Id == 0)
+                {
+                    await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
+                }
+                else
+                {
+                    await ReplyAsync($"{player.Name} is currently Level {player.Level} with {player.Exp} XP");
+                }
+            }
+        }
         
     }
 }

@@ -97,6 +97,18 @@ namespace IdleGame
             Environment.Exit(0);
         }
 
+        public static Player FindPlayer(string name)
+        {
+            foreach (var p in PlayerList)
+            {
+                if (p.Value.Name.Equals(name))
+                {
+                    return p.Value;
+                }
+            }
+            return new Player(0, "");
+        }
+
         // SQL functions
         public static int AddPlayer(ulong id, string name)
         {
