@@ -47,7 +47,7 @@ namespace IdleGame
             
             var context = new SocketCommandContext(_client, message);
 
-            var result = await _commands.ExecuteAsync(context: context, argPos: argPos, services: null);
+            await _commands.ExecuteAsync(context: context, argPos: argPos, services: null);
         }
     }
 }

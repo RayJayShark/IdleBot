@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -14,8 +16,8 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using dotenv.net;
+using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
-using Org.BouncyCastle.Cms;
 
 
 namespace IdleGame
@@ -23,7 +25,8 @@ namespace IdleGame
     class Program
     {
         private static DiscordSocketClient _client;
-        private CommandHandler _commands;
+        private CommandService _commands;
+        private IServiceProvider services;
         private static MySqlConnection _conn;
         private static MySqlCommand _cmd;
         private static MySqlDataReader _reader;
@@ -65,16 +68,23 @@ namespace IdleGame
             
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Info
+                LogLevel = LogSeverity.Info,
+                MessageCacheSize = 100
             });
-            
-            _commands = new CommandHandler(_client, new CommandService());
-            await _commands.InstallCommandsAsync();
-            
+
             _client.Log += Log;
 
             await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
             await _client.StartAsync();
+            
+            services = new ServiceCollection()
+                .AddSingleton(_client)
+                .BuildServiceProvider();
+            
+            _commands = new CommandService();
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+            _client.MessageUpdated += MessageUpdated;
+            _client.MessageReceived += HandleCommandAsync;
 
             var expTimer = new Timer();
             expTimer.Elapsed += GiveExp;
@@ -88,6 +98,37 @@ namespace IdleGame
         {
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
+        }
+        
+        private async Task HandleCommandAsync(SocketMessage messageParam)
+        {
+            var message = messageParam as SocketUserMessage;
+            if (message == null) return;
+
+            int argPos = 0;
+
+            char prefix;
+            try
+            {
+                prefix = Environment.GetEnvironmentVariable("COMMAND_PREFIX")[0];
+            }
+            catch (Exception ex)
+            {
+                prefix = '+';
+            }
+            
+            if (!(message.HasCharPrefix(prefix, ref argPos) || message.HasMentionPrefix(_client.CurrentUser, ref argPos)) || message.Author.IsBot)
+                return;
+            
+            var context = new SocketCommandContext(_client, message);
+
+            await _commands.ExecuteAsync(context: context, argPos: argPos, services: services);
+        }
+
+        private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after,
+            ISocketMessageChannel channel)
+        {
+            var message = await before.GetOrDownloadAsync();
         }
 
         public static async Task Shutdown()
