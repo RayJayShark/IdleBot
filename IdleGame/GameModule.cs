@@ -1,17 +1,16 @@
 using System;
-using System.Net.Mail;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
-using Discord.Rest;
 using Discord.WebSocket;
-using Google.Protobuf.WellKnownTypes;
-using Org.BouncyCastle.Crypto.Engines;
+
 
 namespace IdleGame
 {
     public class GameModule : ModuleBase<SocketCommandContext>
     {
+        private const string Y = "\uD83C\uDDFE";
+        private const string N = "\uD83C\uDDF3";
         private ulong UserId;
         private ulong DeleteId;
         private ulong ResetId;
@@ -70,10 +69,8 @@ namespace IdleGame
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will reset your character, including all progress. However, you will keep your inventory. \nThere is no going back! Are you sure?");
             UserId = Context.User.Id;
-            var y = new Emoji("\uD83C\uDDFE");
-            var n = new Emoji("\uD83C\uDDF3");
-            await message.AddReactionAsync(y);
-            await message.AddReactionAsync(n);
+            await message.AddReactionAsync(new Emoji(Y));
+            await message.AddReactionAsync(new Emoji(N));
             ResetId = message.Id;
             
             Context.Client.ReactionAdded += ResetConfirmation;
@@ -86,14 +83,14 @@ namespace IdleGame
             {
                 if (reaction.UserId == UserId)
                 {
-                    if (reaction.Emote.Name == "\uD83C\uDDFE")
+                    if (reaction.Emote.Name == Y)
                     {
                         //Reset Character
                         ResetId = 0;
                         UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
                     }
-                    else if (reaction.Emote.Name == "\uD83C\uDDF3")
+                    else if (reaction.Emote.Name == N)
                     {
                         await reaction.Message.Value.DeleteAsync();
                         ResetId = 0;
@@ -110,10 +107,8 @@ namespace IdleGame
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will delete your character, including all progress and inventory. \nThere is no going back! Are you sure?");
             UserId = Context.User.Id;
-            var y = new Emoji("\uD83C\uDDFE");
-            var n = new Emoji("\uD83C\uDDF3");
-            await message.AddReactionAsync(y);
-            await message.AddReactionAsync(n);
+            await message.AddReactionAsync(new Emoji(Y));
+            await message.AddReactionAsync(new Emoji(N));
             DeleteId = message.Id;
             
             Context.Client.ReactionAdded += DeleteConfirmation;
@@ -126,14 +121,14 @@ namespace IdleGame
             {
                 if (reaction.UserId == UserId)
                 {
-                    if (reaction.Emote.Name == "\uD83C\uDDFE")
+                    if (reaction.Emote.Name == Y)
                     {
                         //Delete Character
                         Context.Client.ReactionAdded -= DeleteConfirmation;
                         DeleteId = 0;
                         UserId = 0;
                     }
-                    else if (reaction.Emote.Name == "\uD83C\uDDF3")
+                    else if (reaction.Emote.Name == N)
                     {
                         await reaction.Message.Value.DeleteAsync();
                         Context.Client.ReactionAdded -= DeleteConfirmation;
