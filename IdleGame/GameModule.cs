@@ -89,7 +89,7 @@ namespace IdleGame
                     embed.Title = player.Name + "'s inventory";
                     foreach (var i in player.Inventory)
                     {
-                        embed.Description += i.Value + " " + Program.itemMap[i.Key];
+                        embed.Description +=  Program.itemMap[i.Key] + " " + i.Value + "\n";
                     }
 
                     await ReplyAsync("", false, embed.Build());
@@ -123,7 +123,9 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        //Reset Character
+                        var player = Program.PlayerList[UserId];
+                        Program.PlayerList[UserId] = new Player(player.Id, player.Name) {Inventory = player.Inventory};
+                        await ReplyAsync("Your character was successfully reset.");
                         ResetId = 0;
                         UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
@@ -161,7 +163,8 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        //Delete Character
+                        Program.PlayerList.Remove(UserId);
+                        await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
                         DeleteId = 0;
                         UserId = 0;

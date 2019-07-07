@@ -47,6 +47,5 @@ namespace IdleGame
             return false;       // Not enough Exp to level
         }
         
-        
     }
 }
