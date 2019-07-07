@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -42,7 +43,7 @@ namespace IdleGame
         }
 
         [Command("level")]
-        public async Task CheckLevel(string name = "")
+        public async Task CheckLevel([Remainder] string name = "")
         {
             Player player;
             if (name.Equals(""))
@@ -79,7 +80,7 @@ namespace IdleGame
             }
             else
             {
-                //TODO: MAke prettier embed
+                //TODO: Make prettier embed
                 try
                 {
                     var player = Program.PlayerList[Context.User.Id];
@@ -175,6 +176,35 @@ namespace IdleGame
                 }
             }
         }
-        
+    }
+
+    [Group("admin")]
+    [RequireOwner]
+    public class AdminModule : ModuleBase<SocketCommandContext>
+    {
+        [Command("give")]
+        public async Task GiveItem(uint amount, uint itemId, [Remainder] string playerName = "")
+        {
+            ulong playerId;
+            if (playerName == "")
+            {
+                playerId = Context.User.Id;
+            }
+            else
+            {
+                playerId = Program.FindPlayer(playerName).Id;
+            }
+
+            if (Program.PlayerList[playerId].Inventory.ContainsKey(itemId))
+            {
+                Program.PlayerList[playerId].Inventory[itemId] += amount;
+            }
+            else
+            {
+                Program.PlayerList[playerId].Inventory.Add(itemId, amount);
+            }
+
+            await ReplyAsync($"You now have {Program.PlayerList[playerId].Inventory[itemId]} {Program.itemMap[itemId]}");
+        }
     }
 }
