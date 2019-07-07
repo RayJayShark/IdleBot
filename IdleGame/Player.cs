@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace IdleGame
 {
     public class Player
@@ -9,6 +11,7 @@ namespace IdleGame
         public uint Money;
         public uint Level;
         public uint Exp;
+        public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
 
         public Player(ulong Id, string Name)
         {

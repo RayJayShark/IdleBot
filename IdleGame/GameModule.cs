@@ -11,10 +11,11 @@ namespace IdleGame
     {
         private const string Y = "\uD83C\uDDFE";
         private const string N = "\uD83C\uDDF3";
+        private readonly string NoChar = $"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!";
         private ulong UserId;
         private ulong DeleteId;
         private ulong ResetId;
-        
+
         [Command("intro")]
         public async Task Intro()
         {
@@ -46,6 +47,11 @@ namespace IdleGame
             Player player;
             if (name.Equals(""))
             {
+                if (!Program.PlayerList.ContainsKey(Context.User.Id))
+                {
+                    await ReplyAsync(NoChar);
+                    return;
+                }
                 player = Program.PlayerList[Context.User.Id];
                 await ReplyAsync($"You are currently Level {player.Level} with {player.Exp} XP ({(player.Level * 10) - player.Exp} to the next level)");
             }
@@ -60,6 +66,20 @@ namespace IdleGame
                 {
                     await ReplyAsync($"{player.Name} is currently Level {player.Level} with {player.Exp} XP ({(player.Level * 10) - player.Exp} to the next level)");
                 }
+            }
+        }
+
+        [Command("inventory")]
+        [Alias("inv")]
+        public async Task CheckInventory()
+        {
+            if (!Program.PlayerList.ContainsKey(Context.User.Id))
+            {
+                await ReplyAsync(NoChar);
+            }
+            else
+            {
+                //TODO: Create Embed
             }
         }
         

@@ -32,6 +32,7 @@ namespace IdleGame
         private static MySqlDataReader _reader;
         private string _connStr;
         public static Dictionary<ulong, Player> PlayerList;
+        public static ArrayList itemMap;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
@@ -65,6 +66,11 @@ namespace IdleGame
             }
 
             PlayerList = QueryPlayers();
+            var itemQuery = _conn.Query<ItemMap>("SELECT * FROM item");
+            foreach (var i in itemQuery)
+            {
+                itemMap.Add(i);
+            }
             
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
@@ -85,6 +91,7 @@ namespace IdleGame
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
             _client.MessageUpdated += MessageUpdated;
             _client.MessageReceived += HandleCommandAsync;
+            //TODO: Check database and other stuff when disconnected.
 
             var expTimer = new Timer();
             expTimer.Elapsed += GiveExp;
@@ -158,7 +165,9 @@ namespace IdleGame
                 return 1;
             }
             PlayerList.Add(id, new Player(id, name));
+            PlayerList[id].Inventory.Add(1, 10);
             _conn.Execute($"INSERT INTO players VALUES(Id = {id}, Name = '{name}')");
+            _conn.Execute($"INSERT INTO inventory VALUES(PlayerId = {id}, ItemId = 1, Quantity = 10)");
             return 0;
         }
         
@@ -168,6 +177,18 @@ namespace IdleGame
             var players = _conn.Query<Player>("SELECT * FROM player");
             foreach (var p in players)
             {
+                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
+                if (inv.Count() != 0)
+                {
+                    foreach (var i in inv)
+                    {
+                        if (i.Quantity > 0)
+                        {
+                            p.Inventory.Add(i.ItemId, i.Quantity);
+                        }
+                    }
+                }
+
                 tempPlayerList.Add(p.Id, p);
             }
 
@@ -179,8 +200,20 @@ namespace IdleGame
             foreach (var p in PlayerList)
             {
                 _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, MaxHp = {p.Value.MaxHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp} WHERE Id = {p.Key}");
+                
+                foreach (var i in p.Value.Inventory)
+                {
+                    _conn.Execute($"UPDATE ");
+                }
             }
+
+            CleanInventories();
             Console.WriteLine("Database updated");
+        }
+
+        private static void CleanInventories()
+        {
+            _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
         }
 
         private static void GiveExp(object source, ElapsedEventArgs e)
@@ -203,5 +236,17 @@ namespace IdleGame
             Console.WriteLine("Exp Given!");
             UpdateDatabase();
         }
+    }
+
+    struct InventoryQuery
+    {
+        public uint ItemId;
+        public uint Quantity;
+    }
+
+    struct ItemMap
+    {
+        public uint ItemId;
+        public string Name;
     }
 }
