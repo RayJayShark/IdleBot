@@ -32,7 +32,7 @@ namespace IdleGame
         private static MySqlDataReader _reader;
         private string _connStr;
         public static Dictionary<ulong, Player> PlayerList;
-        public static ArrayList itemMap;
+        public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         public async Task MainAsync()
@@ -66,12 +66,12 @@ namespace IdleGame
             }
 
             PlayerList = QueryPlayers();
-            var itemQuery = _conn.Query<ItemMap>("SELECT * FROM item");
+            var itemQuery = _conn.Query<ItemQuery>("SELECT * FROM item");
             foreach (var i in itemQuery)
             {
-                itemMap.Add(i);
+                itemMap.Add(i.Id, i.Name);
             }
-            
+
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
                 LogLevel = LogSeverity.Info,
@@ -197,23 +197,33 @@ namespace IdleGame
 
         private static void UpdateDatabase()
         {
+            CleanInventories();
             foreach (var p in PlayerList)
             {
                 _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, MaxHp = {p.Value.MaxHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp} WHERE Id = {p.Key}");
                 
                 foreach (var i in p.Value.Inventory)
                 {
-                    _conn.Execute($"UPDATE ");
+                    _conn.Execute($"UPDATE inventory SET Quantity = {i.Value} WHERE PlayerId = {p.Key} AND ItemId = {i.Key}");
                 }
             }
-
-            CleanInventories();
+            
+            _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
             Console.WriteLine("Database updated");
         }
 
-        private static void CleanInventories()
+        private static void CleanInventories()        // Clear inventory items with zeros
         {
-            _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
+            foreach (var p in PlayerList)
+            {
+                foreach (var i in p.Value.Inventory)
+                {
+                    if (i.Value == 0)
+                    {
+                        PlayerList[p.Key].Inventory.Remove((i.Key));
+                    }
+                }
+            }
         }
 
         private static void GiveExp(object source, ElapsedEventArgs e)
@@ -244,9 +254,9 @@ namespace IdleGame
         public uint Quantity;
     }
 
-    struct ItemMap
+    struct ItemQuery
     {
-        public uint ItemId;
+        public uint Id;
         public string Name;
     }
 }

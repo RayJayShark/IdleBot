@@ -79,7 +79,24 @@ namespace IdleGame
             }
             else
             {
-                //TODO: Create Embed
+                //TODO: MAke prettier embed
+                try
+                {
+                    var player = Program.PlayerList[Context.User.Id];
+                    var embed = new EmbedBuilder();
+                    embed.Color = Color.Blue;
+                    embed.Title = player.Name + "'s inventory";
+                    foreach (var i in player.Inventory)
+                    {
+                        embed.Description += i.Value + " " + Program.itemMap[i.Key];
+                    }
+
+                    await ReplyAsync("", false, embed.Build());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                }
             }
         }
         
