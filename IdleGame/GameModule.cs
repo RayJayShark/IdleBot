@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using static IdleGame.Program;
 
 
 namespace IdleGame
@@ -30,7 +31,7 @@ namespace IdleGame
         {
             var guildUser = (IGuildUser) Context.User;
             string user = guildUser.Nickname;
-            int success = Program.AddPlayer(Context.User.Id, user);
+            int success = AddPlayer(Context.User.Id, user);
 
             if (success == 0)
             {
@@ -124,8 +125,10 @@ namespace IdleGame
                     if (reaction.Emote.Name == Y)
                     {
                         var player = Program.PlayerList[UserId];
-                        Program.PlayerList[UserId] = new Player(player.Id, player.Name) {Inventory = player.Inventory};
+                        PlayerList[UserId] = new Player(player.Id, player.Name) {Inventory = player.Inventory};
+                        await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
+                        UpdateDatabase();
                         ResetId = 0;
                         UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
@@ -163,7 +166,10 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        Program.PlayerList.Remove(UserId);
+                        PlayerList.Remove(UserId);
+                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
                         DeleteId = 0;
@@ -195,16 +201,16 @@ namespace IdleGame
             }
             else
             {
-                playerId = Program.FindPlayer(playerName).Id;
+                playerId = FindPlayer(playerName).Id;
             }
 
-            if (Program.PlayerList[playerId].Inventory.ContainsKey(itemId))
+            if (PlayerList[playerId].Inventory.ContainsKey(itemId))
             {
-                Program.PlayerList[playerId].Inventory[itemId] += amount;
+                PlayerList[playerId].Inventory[itemId] += amount;
             }
             else
             {
-                Program.PlayerList[playerId].Inventory.Add(itemId, amount);
+                PlayerList[playerId].Inventory.Add(itemId, amount);
             }
 
             await ReplyAsync($"You now have {Program.PlayerList[playerId].Inventory[itemId]} {Program.itemMap[itemId]}");

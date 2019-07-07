@@ -158,16 +158,30 @@ namespace IdleGame
         }
 
         // SQL functions
+        public static void ExecuteSql(string sql)
+        {
+            _conn.Execute(sql);
+        }
+        
         public static int AddPlayer(ulong id, string name)
         {
             if (PlayerList.ContainsKey(id))
             {
                 return 1;
             }
-            PlayerList.Add(id, new Player(id, name));
-            PlayerList[id].Inventory.Add(1, 10);
-            _conn.Execute($"INSERT INTO players VALUES(Id = {id}, Name = '{name}')");
-            _conn.Execute($"INSERT INTO inventory VALUES(PlayerId = {id}, ItemId = 1, Quantity = 10)");
+
+            try
+            {
+                PlayerList.Add(id, new Player(id, name));
+                PlayerList[id].Inventory.Add(1, 10);
+                _conn.Execute($"INSERT INTO player (Id,Name) VALUES({id}, '{name}')");
+                _conn.Execute($"INSERT INTO inventory VALUES({id}, 1, 10)");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+
             return 0;
         }
         
@@ -194,8 +208,8 @@ namespace IdleGame
 
             return tempPlayerList;
         }
-
-        private static void UpdateDatabase()
+        
+        public static void UpdateDatabase()
         {
             CleanInventories();
             foreach (var p in PlayerList)
