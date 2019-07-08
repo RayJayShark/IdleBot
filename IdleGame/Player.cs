@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Google.Protobuf.WellKnownTypes;
 
 namespace IdleGame
 {
@@ -12,6 +14,7 @@ namespace IdleGame
         public uint Level;
         public uint Exp;
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
+        private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
 
         public Player(ulong Id, string Name)
         {
@@ -24,7 +27,7 @@ namespace IdleGame
             Exp = 0;
         }
 
-        public Player(ulong Id, string Name, uint CurHp, uint MaxHp, uint Money, uint Level, uint Exp)
+        public Player(ulong Id, string Name, uint CurHp, uint MaxHp, uint Money, uint Level, uint Exp, DateTime Boost)
         {
             this.Id = Id;
             this.Name = Name;
@@ -33,6 +36,7 @@ namespace IdleGame
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
+            _boost = Boost.ToUniversalTime().ToTimestamp();
         }
 
         public bool LevelUp()
@@ -46,6 +50,20 @@ namespace IdleGame
 
             return false;       // Not enough Exp to level
         }
+
+        public Timestamp GetBoost()
+        {
+            return _boost;
+        }
         
+        public double HoursSinceLastBoost()
+        {
+            return double.Parse(((DateTime.UtcNow.ToTimestamp().Seconds -_boost.Seconds) / 60.0 / 60).ToString());
+        }
+
+        public void ResetBoost()
+        {
+            _boost = DateTime.UtcNow.ToTimestamp();
+        }
     }
 }

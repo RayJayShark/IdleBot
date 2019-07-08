@@ -44,6 +44,44 @@ namespace IdleGame
             }
         }
 
+        [Command("boost")]
+        public async Task Boost()
+        {
+            var userId = Context.User.Id;
+            if (!PlayerList.ContainsKey(Context.User.Id))
+            {
+                await ReplyAsync(_noChar);
+                return;
+            }
+
+            try
+            {
+                var hour = PlayerList[userId].HoursSinceLastBoost();
+                if (hour < int.Parse(Environment.GetEnvironmentVariable("BOOST_HOURS")))
+                {
+                    await ReplyAsync(
+                        $"You still have {(double.Parse(Environment.GetEnvironmentVariable("BOOST_HOURS")) - hour):N} hours until you can boost again.");
+                    return;
+                }
+
+                PlayerList[userId].Exp += 10;
+                if (PlayerList[userId].LevelUp())
+                {
+                    await Context.Guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                        .SendMessageAsync(
+                            $"{Context.User.Mention} has leveled up! They are now Level {PlayerList[userId].Level}");
+                }
+
+                PlayerList[userId].ResetBoost();
+                UpdateDatabase();
+                await ReplyAsync("You've been boosted!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
         [Command("level")]
         public async Task CheckLevel([Remainder] string name = "")
         {

@@ -82,7 +82,7 @@ namespace IdleGame
 
             var expTimer = new Timer();
             expTimer.Elapsed += GiveExp;
-            expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_TIMER")) * 1000;
+            expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")) * 1000;
             expTimer.Enabled = true;
 
             await Task.Delay(-1);
@@ -225,7 +225,7 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, MaxHp = {p.Value.MaxHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp} WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, MaxHp = {p.Value.MaxHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
                 
                 foreach (var i in p.Value.Inventory)
                 {
