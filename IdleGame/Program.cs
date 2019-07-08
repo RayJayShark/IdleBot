@@ -26,16 +26,14 @@ namespace IdleGame
     {
         private static DiscordSocketClient _client;
         private CommandService _commands;
-        private IServiceProvider services;
+        private IServiceProvider _services;
         private static MySqlConnection _conn;
-        private static MySqlCommand _cmd;
-        private static MySqlDataReader _reader;
         private string _connStr;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
-        public async Task MainAsync()
+        private async Task MainAsync()
         {
             if (!File.Exists(".env"))
             {
@@ -52,18 +50,7 @@ namespace IdleGame
                       $"port={Environment.GetEnvironmentVariable("MYSQL_PORT")}";
 
             _conn = new MySqlConnection(_connStr);
-            try
-            {
-                Console.WriteLine("Testing MySQL...");
-                _conn.Open();
-                _conn.Close();
-                Console.WriteLine("Test Complete!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                Environment.Exit(1);
-            }
+            await TestMySqlConnection();
 
             PlayerList = QueryPlayers();
             var itemQuery = _conn.Query<ItemQuery>("SELECT * FROM item");
@@ -83,15 +70,15 @@ namespace IdleGame
             await _client.LoginAsync(TokenType.Bot, Environment.GetEnvironmentVariable("DISCORD_TOKEN"));
             await _client.StartAsync();
             
-            services = new ServiceCollection()
+            _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .BuildServiceProvider();
             
             _commands = new CommandService();
-            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), services);
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
             _client.MessageUpdated += MessageUpdated;
             _client.MessageReceived += HandleCommandAsync;
-            //TODO: Check database and other stuff when disconnected.
+            _client.Disconnected += HandleDisconnect;
 
             var expTimer = new Timer();
             expTimer.Elapsed += GiveExp;
@@ -129,13 +116,37 @@ namespace IdleGame
             
             var context = new SocketCommandContext(_client, message);
 
-            await _commands.ExecuteAsync(context: context, argPos: argPos, services: services);
+            await _commands.ExecuteAsync(context: context, argPos: argPos, services: _services);
         }
 
         private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after,
             ISocketMessageChannel channel)
         {
             var message = await before.GetOrDownloadAsync();
+        }
+
+        private async Task HandleDisconnect(Exception ex)
+        {
+            await TestMySqlConnection();
+        }
+
+#pragma warning disable 1998
+        private static async Task TestMySqlConnection()
+#pragma warning restore 1998
+        {
+            try
+            {
+                Console.WriteLine("Testing MySQL...");
+                _conn.Open();
+                _conn.Close();
+                Console.WriteLine("Test Complete!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SQL test failed. Please ensure your MySQL server is running and the credentials are correct in the .env file.");
+                Console.WriteLine(ex.ToString());
+                Environment.Exit(1);
+            }
         }
 
         public static async Task Shutdown()

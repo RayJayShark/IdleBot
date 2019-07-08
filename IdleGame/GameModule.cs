@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
@@ -13,10 +14,10 @@ namespace IdleGame
     {
         private const string Y = "\uD83C\uDDFE";
         private const string N = "\uD83C\uDDF3";
-        private readonly string NoChar = $"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!";
-        private ulong UserId;
-        private ulong DeleteId;
-        private ulong ResetId;
+        private readonly string _noChar = $"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!";
+        private ulong _userId;
+        private ulong _deleteId;
+        private ulong _resetId;
 
         [Command("intro")]
         public async Task Intro()
@@ -51,7 +52,7 @@ namespace IdleGame
             {
                 if (!Program.PlayerList.ContainsKey(Context.User.Id))
                 {
-                    await ReplyAsync(NoChar);
+                    await ReplyAsync(_noChar);
                     return;
                 }
                 player = Program.PlayerList[Context.User.Id];
@@ -77,7 +78,7 @@ namespace IdleGame
         {
             if (!Program.PlayerList.ContainsKey(Context.User.Id))
             {
-                await ReplyAsync(NoChar);
+                await ReplyAsync(_noChar);
             }
             else
             {
@@ -107,10 +108,10 @@ namespace IdleGame
         {
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will reset your character, including all progress. However, you will keep your inventory. \nThere is no going back! Are you sure?");
-            UserId = Context.User.Id;
+            _userId = Context.User.Id;
             await message.AddReactionAsync(new Emoji(Y));
             await message.AddReactionAsync(new Emoji(N));
-            ResetId = message.Id;
+            _resetId = message.Id;
             
             Context.Client.ReactionAdded += ResetConfirmation;
         }
@@ -118,26 +119,26 @@ namespace IdleGame
         private async Task ResetConfirmation(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
             SocketReaction reaction)
         {
-            if (reaction.MessageId == ResetId)
+            if (reaction.MessageId == _resetId)
             {
-                if (reaction.UserId == UserId)
+                if (reaction.UserId == _userId)
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        var player = Program.PlayerList[UserId];
-                        PlayerList[UserId] = new Player(player.Id, player.Name) {Inventory = player.Inventory};
+                        var player = Program.PlayerList[_userId];
+                        PlayerList[_userId] = new Player(player.Id, player.Name) {Inventory = player.Inventory};
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
                         UpdateDatabase();
-                        ResetId = 0;
-                        UserId = 0;
+                        _resetId = 0;
+                        _userId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
                     }
                     else if (reaction.Emote.Name == N)
                     {
                         await reaction.Message.Value.DeleteAsync();
-                        ResetId = 0;
-                        UserId = 0;
+                        _resetId = 0;
+                        _userId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
                     }
                 }
@@ -149,10 +150,10 @@ namespace IdleGame
         {
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will delete your character, including all progress and inventory. \nThere is no going back! Are you sure?");
-            UserId = Context.User.Id;
+            _userId = Context.User.Id;
             await message.AddReactionAsync(new Emoji(Y));
             await message.AddReactionAsync(new Emoji(N));
-            DeleteId = message.Id;
+            _deleteId = message.Id;
             
             Context.Client.ReactionAdded += DeleteConfirmation;
         }
@@ -160,60 +161,98 @@ namespace IdleGame
         private async Task DeleteConfirmation(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
             SocketReaction reaction)
         {
-            if (reaction.MessageId == DeleteId)
+            if (reaction.MessageId == _deleteId)
             {
-                if (reaction.UserId == UserId)
+                if (reaction.UserId == _userId)
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        PlayerList.Remove(UserId);
-                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
-                        ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        PlayerList.Remove(_userId);
+                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {_userId}");
+                        ExecuteSql($"DELETE FROM player WHERE Id = {_userId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
-                        DeleteId = 0;
-                        UserId = 0;
+                        _deleteId = 0;
+                        _userId = 0;
                     }
                     else if (reaction.Emote.Name == N)
                     {
                         await reaction.Message.Value.DeleteAsync();
                         Context.Client.ReactionAdded -= DeleteConfirmation;
-                        DeleteId = 0;
-                        UserId = 0;
+                        _deleteId = 0;
+                        _userId = 0;
                     }
                 }
             }
         }
     }
 
-    [Group("admin")]
+    [Group("")]
     [RequireOwner]
     public class AdminModule : ModuleBase<SocketCommandContext>
     {
-        [Command("give")]
-        public async Task GiveItem(uint amount, uint itemId, [Remainder] string playerName = "")
+        [Group("give")]
+        public class GiveModule : ModuleBase<SocketCommandContext>
         {
-            ulong playerId;
-            if (playerName == "")
+
+            [Command("item")]
+            public async Task GiveItem(uint itemId, uint amount, [Remainder] string playerName = "")
             {
-                playerId = Context.User.Id;
-            }
-            else
-            {
-                playerId = FindPlayer(playerName).Id;
+                ulong playerId = playerName== string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
+
+                if (!PlayerList.ContainsKey(playerId))
+                {
+                    await ReplyAsync("Character doesn't exist.");
+                    return;
+                }
+                
+                if (PlayerList[playerId].Inventory.ContainsKey(itemId))
+                {
+                    PlayerList[playerId].Inventory[itemId] += amount;
+                }
+                else
+                {
+                    PlayerList[playerId].Inventory.Add(itemId, amount);
+                }
+
+                await ReplyAsync(
+                    $"{PlayerList[playerId].Name} now has {PlayerList[playerId].Inventory[itemId]} {itemMap[itemId]}");
             }
 
-            if (PlayerList[playerId].Inventory.ContainsKey(itemId))
+            [Command("exp")]
+            [Alias("xp")]
+            public async Task GiveExp(uint amount, [Remainder] string playerName = "")
             {
-                PlayerList[playerId].Inventory[itemId] += amount;
-            }
-            else
-            {
-                PlayerList[playerId].Inventory.Add(itemId, amount);
+                var playerId = playerName == string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
+                
+                if (!PlayerList.ContainsKey(playerId))
+                {
+                    await ReplyAsync("Character doesn't exist.");
+                    return;
+                }
+                
+                PlayerList[playerId].Exp += amount;
+                await ReplyAsync(
+                    $"{PlayerList[playerId].Name} now has {PlayerList[playerId].Exp} xp");
             }
 
-            await ReplyAsync($"You now have {Program.PlayerList[playerId].Inventory[itemId]} {Program.itemMap[itemId]}");
+            [Command("level")]
+            [Alias("lvl")]
+            public async Task GiveLevel(uint amount, [Remainder] string playerName = "")
+            {
+                var playerId = playerName == string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
+                
+                if (!PlayerList.ContainsKey(playerId))
+                {
+                    await ReplyAsync("Character doesn't exist.");
+                    return;
+                }
+                
+                PlayerList[playerId].Level += amount;
+                await ReplyAsync(
+                    $"{PlayerList[playerId].Name} is now Level {PlayerList[playerId].Level}");
+            }
         }
     }
 }
