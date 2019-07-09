@@ -34,6 +34,7 @@ namespace IdleGame
         private static MySqlConnection _conn;
         private string _connStr;
         private static RestUserMessage _message;
+        private static ulong _channelId;
         private static ulong _newPlayerId;
         private static string _newPlayerName;
         private static string _newPlayerFaction;
@@ -195,6 +196,7 @@ namespace IdleGame
 
             _newPlayerId = id;
             _newPlayerName = name;
+            _channelId = channelId;
 
             var embed = new EmbedBuilder {Color = Color.Blue, Title = _newPlayerName + ": Choose Your Faction"};
             embed.AddField("1. Human", "Humans are dumb. Only plebs choose to be a human.");
@@ -202,7 +204,7 @@ namespace IdleGame
             embed.AddField("3. Vulcan", "Everything is logic with these guys. They also have pointy ass ears. Nerds.");
 
             _message = await _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
-                .GetTextChannel(channelId)
+                .GetTextChannel(_channelId)
                 .SendMessageAsync("", false, embed.Build());
             await _message.AddReactionAsync(new Emoji(One));
             await _message.AddReactionAsync(new Emoji(Two));
@@ -237,12 +239,12 @@ namespace IdleGame
 
             await _message.DeleteAsync();
             var embed = new EmbedBuilder {Color = Color.Blue, Title = _newPlayerName + ": Choose Your Class"};
-            embed.AddField("1. Captain", "Captians");
+            embed.AddField("1. Captain", "Captains");
             embed.AddField("2. Marksman", "Marksmans");
             embed.AddField("3. Smuggler", "Smuggles");
 
             _message = await _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
-                .GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                .GetTextChannel(_channelId)
                 .SendMessageAsync("", false, embed.Build());
             await _message.AddReactionAsync(new Emoji(One));
             await _message.AddReactionAsync(new Emoji(Two));
@@ -288,9 +290,11 @@ namespace IdleGame
             }
 
             await _message.Channel.SendMessageAsync($"{_newPlayerName}, the {_newPlayerFaction} {_newPlayerClass}, has started their journey!");
+            //TODO: Send DM introduction
             await _message.DeleteAsync();
 
             _newPlayerId = 0;
+            _channelId = 0;
             _newPlayerClass = "";
             _newPlayerFaction = "";
             _newPlayerName = "";

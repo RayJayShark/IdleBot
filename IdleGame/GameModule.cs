@@ -22,6 +22,7 @@ namespace IdleGame
         [Command("intro")]
         public async Task Intro()
         {
+            //TODO: Resend intro based on class and faction? Or just remove this command?
             var user = Context.User;
             var channel = await user.GetOrCreateDMChannelAsync();
             await channel.SendMessageAsync("test");
