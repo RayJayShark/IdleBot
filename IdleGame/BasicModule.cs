@@ -19,5 +19,12 @@ namespace IdleGame
             await Program.Shutdown();
         }
 
+        [Command("emoji")]
+        public async Task GetEmojiCode(string e)
+        {
+            var emoji = new Emoji(e);
+            await ReplyAsync("```" + emoji.Name + "```");
+            
+        }
     }
 }

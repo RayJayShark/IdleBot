@@ -14,6 +14,7 @@ using System.Timers;
 using Dapper;
 using Discord;
 using Discord.Commands;
+using Discord.Rest;
 using Discord.WebSocket;
 using dotenv.net;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,11 +25,19 @@ namespace IdleGame
 {
     class Program
     {
+        private const string One = "1⃣";
+        private const string Two = "2⃣";
+        private const string Three = "3⃣";
         private static DiscordSocketClient _client;
         private CommandService _commands;
         private IServiceProvider _services;
         private static MySqlConnection _conn;
         private string _connStr;
+        private static RestUserMessage _message;
+        private static ulong _newPlayerId;
+        private static string _newPlayerName;
+        private static string _newPlayerFaction;
+        private static string _newPlayerClass;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
 
@@ -165,7 +174,7 @@ namespace IdleGame
                     return p.Value;
                 }
             }
-            return new Player(0, "");
+            return new Player(0, "", "", "");
         }
 
         // SQL functions
@@ -174,26 +183,117 @@ namespace IdleGame
             _conn.Execute(sql);
         }
         
-        public static int AddPlayer(ulong id, string name)
+        public static async Task AddPlayer(ulong id, string name, ulong channelId)
         {
             if (PlayerList.ContainsKey(id))
             {
-                return 1;
+                await _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
+                    .GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                    .SendMessageAsync("You already have a character!");
+                return;
+            }
+
+            _newPlayerId = id;
+            _newPlayerName = name;
+
+            var embed = new EmbedBuilder {Color = Color.Blue, Title = _newPlayerName + ": Choose Your Faction"};
+            embed.AddField("1. Human", "Humans are dumb. Only plebs choose to be a human.");
+            embed.AddField("2. Klingon", "The boys be crazy. Total warrior tribe vibes. Like to kill, love to die.");
+            embed.AddField("3. Vulcan", "Everything is logic with these guys. They also have pointy ass ears. Nerds.");
+
+            _message = await _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
+                .GetTextChannel(channelId)
+                .SendMessageAsync("", false, embed.Build());
+            await _message.AddReactionAsync(new Emoji(One));
+            await _message.AddReactionAsync(new Emoji(Two));
+            await _message.AddReactionAsync(new Emoji(Three));
+
+            _client.ReactionAdded += ChooseFaction;
+        }
+
+        private static async Task ChooseFaction(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
+            SocketReaction reaction)
+        {
+            if (reaction.MessageId != _message.Id || reaction.UserId != _newPlayerId)
+                return;
+
+            _client.ReactionAdded -= ChooseFaction;
+
+            switch (reaction.Emote.Name)
+            {
+                case One:
+                    _newPlayerFaction = "Human";
+                    break;
+                case Two:
+                    _newPlayerFaction = "Klingon";
+                    break;
+                case Three:
+                    _newPlayerFaction = "Vulcan";
+                    break;
+                default:
+                    _client.ReactionAdded += ChooseFaction;
+                    break;
+            }
+
+            await _message.DeleteAsync();
+            var embed = new EmbedBuilder {Color = Color.Blue, Title = _newPlayerName + ": Choose Your Class"};
+            embed.AddField("1. Captain", "Captians");
+            embed.AddField("2. Marksman", "Marksmans");
+            embed.AddField("3. Smuggler", "Smuggles");
+
+            _message = await _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
+                .GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                .SendMessageAsync("", false, embed.Build());
+            await _message.AddReactionAsync(new Emoji(One));
+            await _message.AddReactionAsync(new Emoji(Two));
+            await _message.AddReactionAsync(new Emoji(Three));
+            
+            _client.ReactionAdded += ChooseClass;
+        }
+
+        private static async Task ChooseClass(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
+            SocketReaction reaction)
+        {
+            if (reaction.MessageId != _message.Id || reaction.UserId != _newPlayerId)
+                return;
+
+            _client.ReactionAdded -= ChooseClass;
+
+            switch (reaction.Emote.Name)
+            {
+                case One:
+                    _newPlayerClass = "Captain";
+                    break;
+                case Two:
+                    _newPlayerClass = "Marksman";
+                    break;
+                case Three:
+                    _newPlayerClass = "Smuggler";
+                    break;
+                default:
+                    _client.ReactionAdded += ChooseClass;
+                    break;
             }
 
             try
             {
-                PlayerList.Add(id, new Player(id, name));
-                PlayerList[id].Inventory.Add(1, 10);
-                _conn.Execute($"INSERT INTO player (Id,Name) VALUES({id}, '{name}')");
-                _conn.Execute($"INSERT INTO inventory VALUES({id}, 1, 10)");
+                _conn.Execute($"INSERT INTO player (Id,Name,Faction,Class) VALUES({_newPlayerId}, '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}')");
+                _conn.Execute($"INSERT INTO inventory VALUES({_newPlayerId}, 1, 10)");
+                PlayerList.Add(_newPlayerId, new Player(_newPlayerId, _newPlayerName, _newPlayerFaction, _newPlayerClass));
+                PlayerList[_newPlayerId].Inventory.Add(1, 10);
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
             }
 
-            return 0;
+            await _message.Channel.SendMessageAsync($"{_newPlayerName}, the {_newPlayerFaction} {_newPlayerClass}, has started their journey!");
+            await _message.DeleteAsync();
+
+            _newPlayerId = 0;
+            _newPlayerClass = "";
+            _newPlayerFaction = "";
+            _newPlayerName = "";
         }
         
         private static Dictionary<ulong, Player> QueryPlayers()
@@ -225,7 +325,7 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, MaxHp = {p.Value.MaxHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, SkillPoints = {p.Value.SkillPoints}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
                 
                 foreach (var i in p.Value.Inventory)
                 {

@@ -26,22 +26,13 @@ namespace IdleGame
             var channel = await user.GetOrCreateDMChannelAsync();
             await channel.SendMessageAsync("test");
         }
-        
+
         [Command("new")]
         public async Task NewPlayer()
         {
             var guildUser = (IGuildUser) Context.User;
             string user = guildUser.Nickname;
-            int success = AddPlayer(Context.User.Id, user);
-
-            if (success == 0)
-            {
-                await ReplyAsync($"Player \"{user}\" created successfully. Enjoy your journey! Use the {Environment.GetEnvironmentVariable("COMMAND_PREFIX")}intro command for an introduction!");
-            }
-            else
-            {
-                await ReplyAsync("You already have a character!");
-            }
+            await AddPlayer(Context.User.Id, user, Context.Channel.Id);
         }
 
         [Command("boost")]
@@ -123,7 +114,7 @@ namespace IdleGame
                 //TODO: Make prettier embed
                 try
                 {
-                    var player = Program.PlayerList[Context.User.Id];
+                    var player = PlayerList[Context.User.Id];
                     var embed = new EmbedBuilder();
                     embed.Color = Color.Blue;
                     embed.Title = player.Name + "'s inventory";
@@ -164,7 +155,7 @@ namespace IdleGame
                     if (reaction.Emote.Name == Y)
                     {
                         var player = Program.PlayerList[_userId];
-                        PlayerList[_userId] = new Player(player.Id, player.Name) {Inventory = player.Inventory};
+                        PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class) {Inventory = player.Inventory};
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
                         UpdateDatabase();
