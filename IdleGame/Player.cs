@@ -49,8 +49,8 @@ namespace IdleGame
         {
             if (Exp > 10 * Level)
             {
+                Exp -= 10 * Level;
                 Level++;
-                Exp = 0;
                 return true;    // Leveled Up!
             }
 

@@ -263,8 +263,9 @@ namespace IdleGame
                 }
                 
                 PlayerList[playerId].Exp += amount;
+                PlayerList[playerId].LevelUp();
                 await ReplyAsync(
-                    $"{PlayerList[playerId].Name} now has {PlayerList[playerId].Exp} xp");
+                    $"{PlayerList[playerId].Name} is now {PlayerList[playerId].Level} with {PlayerList[playerId].Exp} xp");
             }
 
             [Command("level")]
