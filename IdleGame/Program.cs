@@ -175,7 +175,7 @@ namespace IdleGame
                     return p.Value;
                 }
             }
-            return new Player(0, "", "", "");
+            return new Player(0, "", "", "", new PlayerStats(0,0,0));
         }
 
         // SQL functions
@@ -260,28 +260,32 @@ namespace IdleGame
                 return;
 
             _client.ReactionAdded -= ChooseClass;
-
+            PlayerStats stats;
             switch (reaction.Emote.Name)
             {
                 case One:
                     _newPlayerClass = "Captain";
+                    stats = new PlayerStats(7, 7, 10);
                     break;
                 case Two:
                     _newPlayerClass = "Marksman";
+                    stats = new PlayerStats(7, 10, 7);
                     break;
                 case Three:
                     _newPlayerClass = "Smuggler";
+                    stats = new PlayerStats(10, 7, 7);
                     break;
                 default:
                     _client.ReactionAdded += ChooseClass;
-                    break;
+                    return;
             }
 
             try
             {
                 _conn.Execute($"INSERT INTO player (Id,Name,Faction,Class) VALUES({_newPlayerId}, '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}')");
                 _conn.Execute($"INSERT INTO inventory VALUES({_newPlayerId}, 1, 10)");
-                PlayerList.Add(_newPlayerId, new Player(_newPlayerId, _newPlayerName, _newPlayerFaction, _newPlayerClass));
+                _conn.Execute($"INSERT INTO stats VALUES({_newPlayerId}, {stats.GetHealth()}, {stats.GetStrength()}, {stats.GetDefence()})");
+                PlayerList.Add(_newPlayerId, new Player(_newPlayerId, _newPlayerName, _newPlayerFaction, _newPlayerClass, stats));
                 PlayerList[_newPlayerId].Inventory.Add(1, 10);
             }
             catch (Exception ex)
@@ -304,8 +308,11 @@ namespace IdleGame
         {
             Dictionary<ulong, Player> tempPlayerList = new Dictionary<ulong, Player>();
             var players = _conn.Query<Player>("SELECT * FROM player");
+            //TODO: Query stats from stats table
             foreach (var p in players)
             {
+                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
+                p.Stats = stats;
                 var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
                 if (inv.Count() != 0)
                 {
@@ -329,7 +336,8 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, SkillPoints = {p.Value.SkillPoints}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, SkillPoints = {p.Value.GetSkillPoints()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.Id}");
                 
                 foreach (var i in p.Value.Inventory)
                 {

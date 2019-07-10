@@ -15,12 +15,12 @@ namespace IdleGame
         public uint Money;
         public uint Level;
         public uint Exp;
-        public byte SkillPoints = 0;
+        private byte _skillPoints = 0;
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
 
-        public Player(ulong id, string name, string faction, string cl)
+        public Player(ulong id, string name, string faction, string cl, PlayerStats stats)
         {
             Id = id;
             Name = name;
@@ -30,6 +30,7 @@ namespace IdleGame
             Money = 10;
             Level = 1;
             Exp = 0;
+            Stats = stats;
         }
 
         public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, byte SkillPoints, DateTime Boost)
@@ -42,7 +43,23 @@ namespace IdleGame
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
+            _skillPoints = SkillPoints;
             _boost = Boost.ToUniversalTime().ToTimestamp();
+        }
+        
+        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, byte SkillPoints, DateTime Boost, PlayerStats Stats)
+        {
+            this.Id = Id;
+            this.Name = Name;
+            this.Faction = Faction;
+            this.Class = Class;
+            this.CurHp = CurHp;
+            this.Money = Money;
+            this.Level = Level;
+            this.Exp = Exp;
+            _skillPoints = SkillPoints;
+            _boost = Boost.ToUniversalTime().ToTimestamp();
+            this.Stats = Stats;
         }
 
         public bool LevelUp()
@@ -51,6 +68,7 @@ namespace IdleGame
             {
                 Exp -= 10 * Level;
                 Level++;
+                _skillPoints++;
                 return true;    // Leveled Up!
             }
 
@@ -71,6 +89,16 @@ namespace IdleGame
         {
             _boost = DateTime.UtcNow.ToTimestamp();
         }
+
+        public void SpendSkillPoint()
+        {
+            
+        }
+
+        public byte GetSkillPoints()
+        {
+            return _skillPoints; 
+        }
     }
 
     public class PlayerStats
@@ -79,13 +107,28 @@ namespace IdleGame
         private byte Strength;
         private byte Defence;
 
+        public byte GetHealth()
+        {
+            return Health;
+        }
+
+        public byte GetStrength()
+        {
+            return Strength;
+        }
+
+        public byte GetDefence()
+        {
+            return Defence;
+        }
+        
         public PlayerStats(byte health, byte strength, byte defence)
         {
             Health = health;
             Strength = strength;
             Defence = defence;
         }
-
+        
         public void AddPointHealth(byte points = 1)
         {
             Health += points;

@@ -156,7 +156,8 @@ namespace IdleGame
                     if (reaction.Emote.Name == Y)
                     {
                         var player = Program.PlayerList[_userId];
-                        PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class) {Inventory = player.Inventory};
+                        //TODO: Make it reset to your class's base stats
+                        PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class, new PlayerStats(1,1,1)) {Inventory = player.Inventory};
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
                         UpdateDatabase();
