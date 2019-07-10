@@ -200,6 +200,7 @@ namespace IdleGame
                     {
                         PlayerList.Remove(_userId);
                         ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {_userId}");
+                        ExecuteSql($"DELETE FROM stats WHERE PlayerId = {_userId}");
                         ExecuteSql($"DELETE FROM player WHERE Id = {_userId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");

@@ -44,7 +44,7 @@ namespace IdleGame
             this.Level = Level;
             this.Exp = Exp;
             _skillPoints = SkillPoints;
-            _boost = Boost.ToUniversalTime().ToTimestamp();
+            _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset.Add(TimeSpan.FromHours(1))).ToUniversalTime().ToTimestamp();
         }
         
         public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, byte SkillPoints, DateTime Boost, PlayerStats Stats)
@@ -58,13 +58,13 @@ namespace IdleGame
             this.Level = Level;
             this.Exp = Exp;
             _skillPoints = SkillPoints;
-            _boost = Boost.ToUniversalTime().ToTimestamp();
+            _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset).ToUniversalTime().ToTimestamp();
             this.Stats = Stats;
         }
 
         public bool LevelUp()
         {
-            if (Exp > 10 * Level)
+            if (Exp >= 10 * Level)
             {
                 Exp -= 10 * Level;
                 Level++;
