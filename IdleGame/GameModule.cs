@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
+using IdleGame.Classes;
 using static IdleGame.Program;
 
 
@@ -199,7 +200,18 @@ namespace IdleGame
                     if (reaction.Emote.Name == Y)
                     {
                         var player = PlayerList[_userId];
-                        PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class, baseClassMap[player.Class]) {Inventory = player.Inventory};
+                        switch (player.Class)
+                        {
+                            case "Captain":
+                                PlayerList[_userId] = new Captain(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                break;
+                            case "Marksman":
+                                PlayerList[_userId] = new Marksman(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                break;
+                            case "Smuggler":
+                                PlayerList[_userId] = new Smuggler(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                break;
+                        }
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
                         UpdateDatabase();

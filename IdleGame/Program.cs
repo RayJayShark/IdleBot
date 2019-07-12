@@ -18,8 +18,10 @@ using Discord.Rest;
 using Discord.WebSocket;
 using dotenv.net;
 using Google.Protobuf.WellKnownTypes;
+using IdleGame.Classes;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
+using Org.BouncyCastle.Asn1.Crmf;
 
 
 namespace IdleGame
@@ -42,12 +44,6 @@ namespace IdleGame
         private static string _newPlayerClass;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
-        public static Dictionary<string, PlayerStats> baseClassMap = new Dictionary<string, PlayerStats>()
-        {
-            { "Captain", new PlayerStats(70, 7, 10) },
-            { "Marksman", new PlayerStats(70, 10, 7) },
-            { "Smuggler", new PlayerStats(100, 7, 7) }
-        };
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -182,7 +178,8 @@ namespace IdleGame
                     return p.Value;
                 }
             }
-            return new Player(0, "", "", "", new PlayerStats(0,0,0));
+            return new BlankCharacter();
+            
         }
 
         // SQL functions
@@ -272,15 +269,15 @@ namespace IdleGame
             {
                 case One:
                     _newPlayerClass = "Captain";
-                    stats = baseClassMap["Captain"];
+                    PlayerList.Add(_newPlayerId, new Captain(_newPlayerId, _newPlayerName, _newPlayerFaction));
                     break;
                 case Two:
                     _newPlayerClass = "Marksman";
-                    stats = baseClassMap["Marksman"];
+                    PlayerList.Add(_newPlayerId, new Marksman(_newPlayerId, _newPlayerName, _newPlayerFaction));
                     break;
                 case Three:
                     _newPlayerClass = "Smuggler";
-                    stats = baseClassMap["Smuggler"];
+                    PlayerList.Add(_newPlayerId, new Smuggler(_newPlayerId, _newPlayerName, _newPlayerFaction));
                     break;
                 default:
                     _client.ReactionAdded += ChooseClass;
@@ -291,8 +288,7 @@ namespace IdleGame
             {
                 _conn.Execute($"INSERT INTO player (Id,Name,Faction,Class) VALUES({_newPlayerId}, '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}')");
                 _conn.Execute($"INSERT INTO inventory VALUES({_newPlayerId}, 1, 10)");
-                _conn.Execute($"INSERT INTO stats VALUES({_newPlayerId}, {stats.GetHealth()}, {stats.GetStrength()}, {stats.GetDefence()})");
-                PlayerList.Add(_newPlayerId, new Player(_newPlayerId, _newPlayerName, _newPlayerFaction, _newPlayerClass, stats));
+                _conn.Execute($"INSERT INTO stats VALUES({_newPlayerId}, {PlayerList[_newPlayerId].Stats.GetHealth()}, {PlayerList[_newPlayerId].Stats.GetStrength()}, {PlayerList[_newPlayerId].Stats.GetDefence()})");
                 PlayerList[_newPlayerId].Inventory.Add(1, 10);
             }
             catch (Exception ex)
@@ -314,8 +310,9 @@ namespace IdleGame
         private static Dictionary<ulong, Player> QueryPlayers()
         {
             Dictionary<ulong, Player> tempPlayerList = new Dictionary<ulong, Player>();
-            var players = _conn.Query<Player>("SELECT * FROM player");
-            foreach (var p in players)
+            // Query Captains
+            var cPlayers = _conn.Query<Captain>("SELECT * FROM player WHERE Class = 'Captain'");
+            foreach (var p in cPlayers)
             {
                 var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
                 p.Stats = stats;
@@ -333,7 +330,49 @@ namespace IdleGame
 
                 tempPlayerList.Add(p.Id, p);
             }
+            
+            // Query Marksmen
+            var mPlayers = _conn.Query<Marksman>("SELECT * FROM player WHERE Class = 'Marksman'");
+            foreach (var p in mPlayers)
+            {
+                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
+                p.Stats = stats;
+                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
+                if (inv.Count() != 0)
+                {
+                    foreach (var i in inv)
+                    {
+                        if (i.Quantity > 0)
+                        {
+                            p.Inventory.Add(i.ItemId, i.Quantity);
+                        }
+                    }
+                }
 
+                tempPlayerList.Add(p.Id, p);
+            }
+            
+            // Query Smuggler
+            var sPlayers = _conn.Query<Smuggler>("SELECT * FROM player WHERE Class = 'Smuggler'");
+            foreach (var p in sPlayers)
+            {
+                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
+                p.Stats = stats;
+                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
+                if (inv.Count() != 0)
+                {
+                    foreach (var i in inv)
+                    {
+                        if (i.Quantity > 0)
+                        {
+                            p.Inventory.Add(i.ItemId, i.Quantity);
+                        }
+                    }
+                }
+
+                tempPlayerList.Add(p.Id, p);
+            }
+            
             return tempPlayerList;
         }
         

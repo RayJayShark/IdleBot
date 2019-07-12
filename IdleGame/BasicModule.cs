@@ -24,7 +24,6 @@ namespace IdleGame
         {
             var emoji = new Emoji(e);
             await ReplyAsync("```" + emoji.Name + "```");
-            
         }
     }
 }

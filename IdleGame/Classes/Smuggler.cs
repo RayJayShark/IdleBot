@@ -7,17 +7,17 @@ namespace IdleGame.Classes
     {
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         
-        public Smuggler(ulong id, string name, string faction, string cl, PlayerStats stats)
+        public Smuggler(ulong id, string name, string faction)
         {
             Id = id;
             Name = name;
             Faction = faction;
-            Class = cl;
+            Class = "Smuggler";
             CurHp = 10;
             Money = 10;
             Level = 1;
             Exp = 0;
-            Stats = stats;
+            Stats = new PlayerStats(100, 7, 7);
         }
         
         public Smuggler(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)

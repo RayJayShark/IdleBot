@@ -7,17 +7,17 @@ namespace IdleGame.Classes
     {
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         
-        public Captain(ulong id, string name, string faction, string cl, PlayerStats stats)
+        public Captain(ulong id, string name, string faction)
         {
             Id = id;
             Name = name;
             Faction = faction;
-            Class = cl;
+            Class = "Captain";
             CurHp = 10;
             Money = 10;
             Level = 1;
             Exp = 0;
-            Stats = stats;
+            Stats = new PlayerStats(70, 7, 10);
         }
         
         public Captain(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
