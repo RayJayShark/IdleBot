@@ -17,6 +17,7 @@ using Discord.Commands;
 using Discord.Rest;
 using Discord.WebSocket;
 using dotenv.net;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.DependencyInjection;
 using MySql.Data.MySqlClient;
 
@@ -346,7 +347,7 @@ namespace IdleGame
             }
             
             _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
-            Console.WriteLine("Database updated");
+            Console.WriteLine($"{DateTime.Now.Hour:D2}:{DateTime.Now.Minute:D2}:{DateTime.Now.Second:D2} Game\t     Database updated");
         }
 
         private static void CleanInventories()        // Clear inventory items with zeros
@@ -380,7 +381,7 @@ namespace IdleGame
                     }
                 }
             }
-            Console.WriteLine("Exp Given!");
+            Console.WriteLine($"{DateTime.Now.Hour:D2}:{DateTime.Now.Minute:D2}:{DateTime.Now.Second:D2} Game\t     Exp Given!");
             UpdateDatabase();
         }
     }

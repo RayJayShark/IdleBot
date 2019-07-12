@@ -75,7 +75,7 @@ namespace IdleGame
         {
             if (!CharacterCreated(Context.User.Id))
                 return; 
-            
+            //TODO: Get info on another character
             var embed = new EmbedBuilder();
             var player = PlayerList[Context.User.Id];
             switch (player.Class)
