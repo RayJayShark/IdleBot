@@ -73,7 +73,9 @@ namespace IdleGame
                 Console.WriteLine(ex.ToString());
             }
         }
-
+        
+        //TODO: Add command to get player info
+        
         [Command("level")]
         public async Task CheckLevel([Remainder] string name = "")
         {

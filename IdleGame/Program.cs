@@ -239,9 +239,9 @@ namespace IdleGame
 
             await _message.DeleteAsync();
             var embed = new EmbedBuilder {Color = Color.Blue, Title = _newPlayerName + ": Choose Your Class"};
-            embed.AddField("1. Captain", "Captains");
-            embed.AddField("2. Marksman", "Marksmans");
-            embed.AddField("3. Smuggler", "Smuggles");
+            embed.AddField("1. Captain", "70 Health\n7 Strength\n10 Defence");
+            embed.AddField("2. Marksman", "70 Health\n10 Strength\n7 Defence");
+            embed.AddField("3. Smuggler", "100 Health\n7 Strength\n7 Defence");
 
             _message = await _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")))
                 .GetTextChannel(_channelId)
@@ -265,15 +265,15 @@ namespace IdleGame
             {
                 case One:
                     _newPlayerClass = "Captain";
-                    stats = new PlayerStats(7, 7, 10);
+                    stats = new PlayerStats(70, 7, 10);
                     break;
                 case Two:
                     _newPlayerClass = "Marksman";
-                    stats = new PlayerStats(7, 10, 7);
+                    stats = new PlayerStats(70, 10, 7);
                     break;
                 case Three:
                     _newPlayerClass = "Smuggler";
-                    stats = new PlayerStats(10, 7, 7);
+                    stats = new PlayerStats(100, 7, 7);
                     break;
                 default:
                     _client.ReactionAdded += ChooseClass;
@@ -336,7 +336,7 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, SkillPoints = {p.Value.GetSkillPoints()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
                 _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.Id}");
                 
                 foreach (var i in p.Value.Inventory)

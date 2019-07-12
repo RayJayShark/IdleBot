@@ -4,7 +4,7 @@ using Discord;
 using Google.Protobuf.WellKnownTypes;
 
 namespace IdleGame
-{
+{//TODO: Make interface or abstract, make classes extend
     public class Player
     {
         public ulong Id;
@@ -15,7 +15,6 @@ namespace IdleGame
         public uint Money;
         public uint Level;
         public uint Exp;
-        private byte _skillPoints = 0;
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
@@ -33,7 +32,7 @@ namespace IdleGame
             Stats = stats;
         }
 
-        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, byte SkillPoints, DateTime Boost)
+        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
         {
             this.Id = Id;
             this.Name = Name;
@@ -43,11 +42,10 @@ namespace IdleGame
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
-            _skillPoints = SkillPoints;
             _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset.Add(TimeSpan.FromHours(1))).ToUniversalTime().ToTimestamp();
         }
         
-        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, byte SkillPoints, DateTime Boost, PlayerStats Stats)
+        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost, PlayerStats Stats)
         {
             this.Id = Id;
             this.Name = Name;
@@ -57,7 +55,6 @@ namespace IdleGame
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
-            _skillPoints = SkillPoints;
             _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset).ToUniversalTime().ToTimestamp();
             this.Stats = Stats;
         }
@@ -68,7 +65,67 @@ namespace IdleGame
             {
                 Exp -= 10 * Level;
                 Level++;
-                _skillPoints++;
+                switch (Class)
+                {
+                    case "Captain":
+                        if (Level % 10 == 0)
+                        {
+                            Stats.AddHealth(20);
+                            Stats.AddStrength(2);
+                            Stats.AddDefence(5);
+                        }
+                        else if (Level % 5 == 0)
+                        {
+                            Stats.AddHealth(10);
+                            Stats.AddStrength();
+                            Stats.AddDefence(3);
+                        }
+                        else
+                        {
+                            Stats.AddDefaults();
+                        }
+                        break;
+                    case "Marksman":
+                        if (Level % 10 == 0)
+                        {
+                            Stats.AddHealth(20);
+                            Stats.AddStrength(5);
+                            Stats.AddDefence(2);
+                        }
+                        else if (Level % 5 == 0)
+                        {
+                            Stats.AddHealth(10);
+                            Stats.AddStrength(3);
+                            Stats.AddDefence();
+                        }
+                        else
+                        {
+                            Stats.AddDefaults();
+                        }
+                        break;
+                    case "Smuggler":
+                        if (Level % 10 == 0)
+                        {
+                            Stats.AddHealth(30);
+                            Stats.AddStrength(2);
+                            Stats.AddDefence(2);
+                        }
+                        else if (Level % 5 == 0)
+                        {
+                            Stats.AddHealth(20);
+                            Stats.AddStrength();
+                            Stats.AddDefence();
+                        }
+                        else
+                        {
+                            Stats.AddDefaults();
+                        }
+                        break;
+                    default:
+                        Level--;
+                        Console.WriteLine("Class mismatch when leveling up. Make sure class string are all updated and current.");
+                        return false;
+                }
                 return true;    // Leveled Up!
             }
 
@@ -88,16 +145,6 @@ namespace IdleGame
         public void ResetBoost()
         {
             _boost = DateTime.UtcNow.ToTimestamp();
-        }
-
-        public void SpendSkillPoint()
-        {
-            
-        }
-
-        public byte GetSkillPoints()
-        {
-            return _skillPoints; 
         }
     }
 
@@ -128,18 +175,25 @@ namespace IdleGame
             Strength = strength;
             Defence = defence;
         }
+
+        public void AddDefaults()
+        {
+            Health += 5;
+            Strength += 1;
+            Defence += 1;
+        }
         
-        public void AddPointHealth(byte points = 1)
+        public void AddHealth(byte points = 5)
         {
             Health += points;
         }
         
-        public void AddPointStrength(byte points = 1)
+        public void AddStrength(byte points = 1)
         {
             Strength += points;
         }
         
-        public void AddPointDefence(byte points = 1)
+        public void AddDefence(byte points = 1)
         {
             Defence += points;
         }
