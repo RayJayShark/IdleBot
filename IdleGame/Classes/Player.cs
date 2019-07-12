@@ -63,78 +63,7 @@ namespace IdleGame.Classes
             this.Stats = Stats;
         }
 
-        public bool LevelUp()
-        {
-            if (Exp >= 10 * Level)
-            {
-                Exp -= 10 * Level;
-                Level++;
-                switch (Class)
-                {
-                    case "Captain":
-                        if (Level % 10 == 0)
-                        {
-                            Stats.AddHealth(20);
-                            Stats.AddStrength(2);
-                            Stats.AddDefence(5);
-                        }
-                        else if (Level % 5 == 0)
-                        {
-                            Stats.AddHealth(10);
-                            Stats.AddStrength();
-                            Stats.AddDefence(3);
-                        }
-                        else
-                        {
-                            Stats.AddDefaults();
-                        }
-                        break;
-                    case "Marksman":
-                        if (Level % 10 == 0)
-                        {
-                            Stats.AddHealth(20);
-                            Stats.AddStrength(5);
-                            Stats.AddDefence(2);
-                        }
-                        else if (Level % 5 == 0)
-                        {
-                            Stats.AddHealth(10);
-                            Stats.AddStrength(3);
-                            Stats.AddDefence();
-                        }
-                        else
-                        {
-                            Stats.AddDefaults();
-                        }
-                        break;
-                    case "Smuggler":
-                        if (Level % 10 == 0)
-                        {
-                            Stats.AddHealth(30);
-                            Stats.AddStrength(2);
-                            Stats.AddDefence(2);
-                        }
-                        else if (Level % 5 == 0)
-                        {
-                            Stats.AddHealth(20);
-                            Stats.AddStrength();
-                            Stats.AddDefence();
-                        }
-                        else
-                        {
-                            Stats.AddDefaults();
-                        }
-                        break;
-                    default:
-                        Level--;
-                        Console.WriteLine("Class mismatch when leveling up. Make sure class string are all updated and current.");
-                        return false;
-                }
-                return true;    // Leveled Up!
-            }
-
-            return false;       // Not enough Exp to level
-        }
+        public abstract bool LevelUp();
 
         public Timestamp GetBoost()
         {

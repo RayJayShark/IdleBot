@@ -46,5 +46,33 @@ namespace IdleGame.Classes
             _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset).ToUniversalTime().ToTimestamp();
             this.Stats = Stats;
         }
+        
+        public override bool LevelUp()
+        {
+            if (Exp >= 10 * Level)
+            {
+                Exp -= 10 * Level;
+                Level++;
+                if (Level % 10 == 0)
+                {
+                    Stats.AddHealth(30);
+                    Stats.AddStrength(2);
+                    Stats.AddDefence(2);
+                }
+                else if (Level % 5 == 0)
+                {
+                    Stats.AddHealth(20);
+                    Stats.AddStrength();
+                    Stats.AddDefence();
+                }
+                else
+                {
+                    Stats.AddDefaults();
+                }
+                return true;    // Leveled Up!
+            }
+
+            return false;       // Not enough Exp to level
+        }
     }
 }

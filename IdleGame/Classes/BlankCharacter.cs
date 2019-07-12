@@ -6,5 +6,10 @@ namespace IdleGame.Classes
         {
             Id = 0;
         }
+
+        public override bool LevelUp()
+        {
+            return false;
+        }
     }
 }
