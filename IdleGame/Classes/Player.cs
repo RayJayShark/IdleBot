@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using Discord;
 using Google.Protobuf.WellKnownTypes;
 
-namespace IdleGame
+namespace IdleGame.Classes
 {//TODO: Make interface or abstract, make classes extend
-    public class Player
+    public abstract class Player
     {
         public ulong Id;
         public string Name;
@@ -19,6 +18,11 @@ namespace IdleGame
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
 
+        public Player()
+        {
+            
+        }
+        
         public Player(ulong id, string name, string faction, string cl, PlayerStats stats)
         {
             Id = id;
