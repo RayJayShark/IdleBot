@@ -14,7 +14,6 @@ namespace IdleGame
     {
         private const string Y = "\uD83C\uDDFE";
         private const string N = "\uD83C\uDDF3";
-        private readonly string _noChar = $"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!";
         private ulong _userId;
         private ulong _deleteId;
         private ulong _resetId;
@@ -40,11 +39,8 @@ namespace IdleGame
         public async Task Boost()
         {
             var userId = Context.User.Id;
-            if (!PlayerList.ContainsKey(Context.User.Id))
-            {
-                await ReplyAsync(_noChar);
+            if (!CharacterCreated(userId))
                 return;
-            }
 
             try
             {
@@ -74,7 +70,34 @@ namespace IdleGame
             }
         }
         
-        //TODO: Add command to get player info
+        [Command("info")]
+        public async Task GetPlayerInfo()
+        {
+            if (!CharacterCreated(Context.User.Id))
+                return; 
+            
+            var embed = new EmbedBuilder();
+            var player = PlayerList[Context.User.Id];
+            switch (player.Class)
+            {
+                case "Captain":
+                    embed.Color = Color.Gold;
+                    break;
+                case "Marksman":
+                    embed.Color = Color.Red;
+                    break;
+                case "Smuggler":
+                    embed.Color = Color.Green;
+                    break;
+            }
+
+            embed.Title = player.Name;
+            embed.Description = player.Faction + "\n" + player.Class;
+            embed.AddField("Stats:",
+                $"Health: {player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
+
+            await ReplyAsync("", false, embed.Build());
+        }
         
         [Command("level")]
         public async Task CheckLevel([Remainder] string name = "")
@@ -82,17 +105,14 @@ namespace IdleGame
             Player player;
             if (name.Equals(""))
             {
-                if (!Program.PlayerList.ContainsKey(Context.User.Id))
-                {
-                    await ReplyAsync(_noChar);
+                if (!CharacterCreated(Context.User.Id))
                     return;
-                }
-                player = Program.PlayerList[Context.User.Id];
+                player = PlayerList[Context.User.Id];
                 await ReplyAsync($"You are currently Level {player.Level} with {player.Exp} XP ({(player.Level * 10) - player.Exp} to the next level)");
             }
             else
             {
-                player = Program.FindPlayer(name);
+                player = FindPlayer(name);
                 if (player.Id == 0)
                 {
                     await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
@@ -108,30 +128,25 @@ namespace IdleGame
         [Alias("inv")]
         public async Task CheckInventory()
         {
-            if (!Program.PlayerList.ContainsKey(Context.User.Id))
+            if (!CharacterCreated(Context.User.Id))
+                return;
+            //TODO: Make prettier embed
+            try
             {
-                await ReplyAsync(_noChar);
-            }
-            else
-            {
-                //TODO: Make prettier embed
-                try
+                var player = PlayerList[Context.User.Id];
+                var embed = new EmbedBuilder();
+                embed.Color = Color.Blue;
+                embed.Title = player.Name + "'s inventory";
+                foreach (var i in player.Inventory)
                 {
-                    var player = PlayerList[Context.User.Id];
-                    var embed = new EmbedBuilder();
-                    embed.Color = Color.Blue;
-                    embed.Title = player.Name + "'s inventory";
-                    foreach (var i in player.Inventory)
-                    {
-                        embed.Description +=  Program.itemMap[i.Key] + " " + i.Value + "\n";
-                    }
+                    embed.Description +=  Program.itemMap[i.Key] + " " + i.Value + "\n";
+                }
 
-                    await ReplyAsync("", false, embed.Build());
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.ToString());
-                }
+                await ReplyAsync("", false, embed.Build());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
             }
         }
         
@@ -139,11 +154,8 @@ namespace IdleGame
         [Alias("stat")]
         public async Task GetStats()
         {
-            if (!PlayerList.ContainsKey(Context.User.Id))
-            {
-                await ReplyAsync(_noChar);
+            if (!CharacterCreated(Context.User.Id))
                 return;
-            }
             
             var player = PlayerList[Context.User.Id];
             await ReplyAsync($"{player.Name}'s stats:\n``Health`` = {player.Stats.GetHealth() * 10}\n``Strength`` = {player.Stats.GetStrength()}\n``Defence`` = {player.Stats.GetDefence()}");
@@ -152,6 +164,9 @@ namespace IdleGame
         [Command("reset")]
         public async Task ResetPlayer()
         {
+            if (!CharacterCreated(Context.User.Id))
+                return;
+            
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will reset your character, including all progress. However, you will keep your inventory. \nThere is no going back! Are you sure?");
             _userId = Context.User.Id;
@@ -171,7 +186,7 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        var player = Program.PlayerList[_userId];
+                        var player = PlayerList[_userId];
                         //TODO: Make it reset to your class's base stats
                         PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class, new PlayerStats(1,1,1)) {Inventory = player.Inventory};
                         await reaction.Message.Value.DeleteAsync();
@@ -195,6 +210,9 @@ namespace IdleGame
         [Command("delete")]
         public async Task DeletePlayer()
         {
+            if (!CharacterCreated(Context.User.Id))
+                return;
+            
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will delete your character, including all progress and inventory. \nThere is no going back! Are you sure?");
             _userId = Context.User.Id;
@@ -233,6 +251,16 @@ namespace IdleGame
                     }
                 }
             }
+        }
+        
+        private bool CharacterCreated(ulong userId)
+        {
+            if (PlayerList.ContainsKey(userId))
+            {
+                return true;
+            }
+            Console.WriteLine($"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!");
+            return false;
         }
     }
 
