@@ -71,20 +71,34 @@ namespace IdleGame
         }
         
         [Command("info")]
-        public async Task GetPlayerInfo()
+        public async Task GetPlayerInfo([Remainder] string name = "")
         {
-            if (!CharacterCreated(Context.User.Id))
-                return; 
-            //TODO: Get info on another character
+            Player player;
+            if (name.Equals(""))
+            {
+                if (!CharacterCreated(Context.User.Id))
+                    return;
+                player = PlayerList[Context.User.Id];
+            }
+            else
+            {
+                player = FindPlayer(name);
+                if (player.Id == 0)
+                {
+                    await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
+                    return;
+                }
+            }
+            
             var embed = new EmbedBuilder();
-            var player = PlayerList[Context.User.Id];
+            
             switch (player.Class)
             {
                 case "Captain":
                     embed.Color = Color.Gold;
                     break;
                 case "Marksman":
-                    embed.Color = Color.Red;
+                    embed.Color = Color.DarkRed;
                     break;
                 case "Smuggler":
                     embed.Color = Color.Green;
@@ -134,9 +148,7 @@ namespace IdleGame
             try
             {
                 var player = PlayerList[Context.User.Id];
-                var embed = new EmbedBuilder();
-                embed.Color = Color.Blue;
-                embed.Title = player.Name + "'s inventory";
+                var embed = new EmbedBuilder {Title = player.Name + "'s inventory"};
                 foreach (var i in player.Inventory)
                 {
                     embed.Description +=  Program.itemMap[i.Key] + " " + i.Value + "\n";
@@ -187,8 +199,7 @@ namespace IdleGame
                     if (reaction.Emote.Name == Y)
                     {
                         var player = PlayerList[_userId];
-                        //TODO: Make it reset to your class's base stats
-                        PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class, new PlayerStats(1,1,1)) {Inventory = player.Inventory};
+                        PlayerList[_userId] = new Player(player.Id, player.Name, player.Faction, player.Class, baseClassMap[player.Class]) {Inventory = player.Inventory};
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
                         UpdateDatabase();

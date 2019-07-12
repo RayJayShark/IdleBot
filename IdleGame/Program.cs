@@ -42,6 +42,12 @@ namespace IdleGame
         private static string _newPlayerClass;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
+        public static Dictionary<string, PlayerStats> baseClassMap = new Dictionary<string, PlayerStats>()
+        {
+            { "Captain", new PlayerStats(70, 7, 10) },
+            { "Marksman", new PlayerStats(70, 10, 7) },
+            { "Smuggler", new PlayerStats(100, 7, 7) }
+        };
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -266,15 +272,15 @@ namespace IdleGame
             {
                 case One:
                     _newPlayerClass = "Captain";
-                    stats = new PlayerStats(70, 7, 10);
+                    stats = baseClassMap["Captain"];
                     break;
                 case Two:
                     _newPlayerClass = "Marksman";
-                    stats = new PlayerStats(70, 10, 7);
+                    stats = baseClassMap["Marksman"];
                     break;
                 case Three:
                     _newPlayerClass = "Smuggler";
-                    stats = new PlayerStats(100, 7, 7);
+                    stats = baseClassMap["Smuggler"];
                     break;
                 default:
                     _client.ReactionAdded += ChooseClass;
@@ -309,7 +315,6 @@ namespace IdleGame
         {
             Dictionary<ulong, Player> tempPlayerList = new Dictionary<ulong, Player>();
             var players = _conn.Query<Player>("SELECT * FROM player");
-            //TODO: Query stats from stats table
             foreach (var p in players)
             {
                 var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
