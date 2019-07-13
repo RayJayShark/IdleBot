@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Google.Protobuf.WellKnownTypes;
 
 namespace IdleGame.Classes
-{//TODO: Make interface or abstract, make classes extend
+{
     public abstract class Player
     {
         public ulong Id;
@@ -14,55 +14,15 @@ namespace IdleGame.Classes
         public uint Money;
         public uint Level;
         public uint Exp;
-        private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
+        Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
 
-        public Player()
+        protected Player()
         {
             
         }
         
-        public Player(ulong id, string name, string faction, string cl, PlayerStats stats)
-        {
-            Id = id;
-            Name = name;
-            Faction = faction;
-            Class = cl;
-            CurHp = 10;
-            Money = 10;
-            Level = 1;
-            Exp = 0;
-            Stats = stats;
-        }
-
-        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
-        {
-            this.Id = Id;
-            this.Name = Name;
-            this.Faction = Faction;
-            this.Class = Class;
-            this.CurHp = CurHp;
-            this.Money = Money;
-            this.Level = Level;
-            this.Exp = Exp;
-            _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset.Add(TimeSpan.FromHours(1))).ToUniversalTime().ToTimestamp();
-        }
-        
-        public Player(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost, PlayerStats Stats)
-        {
-            this.Id = Id;
-            this.Name = Name;
-            this.Faction = Faction;
-            this.Class = Class;
-            this.CurHp = CurHp;
-            this.Money = Money;
-            this.Level = Level;
-            this.Exp = Exp;
-            _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset).ToUniversalTime().ToTimestamp();
-            this.Stats = Stats;
-        }
-
         public abstract bool LevelUp();
 
         public Timestamp GetBoost()
