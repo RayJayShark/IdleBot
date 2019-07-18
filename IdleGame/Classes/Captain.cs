@@ -6,6 +6,7 @@ namespace IdleGame.Classes
     public class Captain : Player
     {
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
+        private uint _curHp;
         
         public Captain(ulong id, string name, string faction)
         {
@@ -13,7 +14,7 @@ namespace IdleGame.Classes
             Name = name;
             Faction = faction;
             Class = "Captain";
-            CurHp = 10;
+            _curHp = 10;
             Money = 10;
             Level = 1;
             Exp = 0;
@@ -26,7 +27,7 @@ namespace IdleGame.Classes
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;
-            this.CurHp = CurHp;
+            this._curHp = CurHp;
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
@@ -39,7 +40,7 @@ namespace IdleGame.Classes
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;
-            this.CurHp = CurHp;
+            this._curHp = CurHp;
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;

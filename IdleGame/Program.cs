@@ -55,7 +55,7 @@ namespace IdleGame
                 return;
             }
             DotEnv.Config(false);
-            
+
             _connStr = $"server={Environment.GetEnvironmentVariable("MYSQL_SERVER")};" +
                       $"user={Environment.GetEnvironmentVariable("MYSQL_USER")};" +
                       $"password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD")};" +
@@ -143,25 +143,6 @@ namespace IdleGame
             await TestMySqlConnection();
         }
 
-#pragma warning disable 1998
-        private static async Task TestMySqlConnection()
-#pragma warning restore 1998
-        {
-            try
-            {
-                Console.WriteLine("Testing MySQL...");
-                _conn.Open();
-                _conn.Close();
-                Console.WriteLine("Test Complete!");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("SQL test failed. Please ensure your MySQL server is running and the credentials are correct in the .env file.");
-                Console.WriteLine(ex.ToString());
-                Environment.Exit(1);
-            }
-        }
-
         public static async Task Shutdown()
         {
             await _client.StopAsync();
@@ -182,7 +163,31 @@ namespace IdleGame
             
         }
 
+        private static string GetTimeStamp()
+        {
+            return $"{DateTime.Now.Hour:D2}:{DateTime.Now.Minute:D2}:{DateTime.Now.Second:D2}";
+        }
+
         // SQL functions
+#pragma warning disable 1998
+        private static async Task TestMySqlConnection()
+#pragma warning restore 1998
+        {
+            try
+            {
+                Console.WriteLine("Testing MySQL...");
+                _conn.Open();
+                _conn.Close();
+                Console.WriteLine("Test Complete!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("SQL test failed. Please ensure your MySQL server is running and the credentials are correct in the .env file.");
+                Console.WriteLine(ex.ToString());
+                Environment.Exit(1);
+            }
+        }
+        
         public static void ExecuteSql(string sql)
         {
             _conn.Execute(sql);
@@ -381,7 +386,7 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.CurHp}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
                 _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.Id}");
                 
                 foreach (var i in p.Value.Inventory)
@@ -391,7 +396,7 @@ namespace IdleGame
             }
             
             _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
-            Console.WriteLine($"{DateTime.Now.Hour:D2}:{DateTime.Now.Minute:D2}:{DateTime.Now.Second:D2} Game\t     Database updated");
+            Console.WriteLine($"{GetTimeStamp()} Game\t     Database updated");
         }
 
         private static void CleanInventories()        // Clear inventory items with zeros
@@ -424,19 +429,20 @@ namespace IdleGame
                                 $"{_client.GetUser(p.Key).Mention} has leveled up! They are now Level {PlayerList[p.Key].Level}");
                     }
                 }
+                PlayerList[p.Key].GiveHp(1);
             }
-            Console.WriteLine($"{DateTime.Now.Hour:D2}:{DateTime.Now.Minute:D2}:{DateTime.Now.Second:D2} Game\t     Exp Given!");
+            Console.WriteLine($"{GetTimeStamp()} Game\t     Exp Given!");
             UpdateDatabase();
         }
     }
 
-    struct InventoryQuery
+    internal struct InventoryQuery
     {
         public uint ItemId;
         public uint Quantity;
     }
 
-    struct ItemQuery
+    internal struct ItemQuery
     {
         public uint Id;
         public string Name;

@@ -321,6 +321,7 @@ namespace IdleGame
 
             [Command("exp")]
             [Alias("xp")]
+            //TODO: Use levelup command instead
             public async Task GiveExp(uint amount, [Remainder] string playerName = "")
             {
                 var playerId = playerName == string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
