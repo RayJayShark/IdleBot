@@ -57,7 +57,7 @@ namespace IdleGame.Classes
 
         public bool TakeDamage(uint damage)
         {
-            if (damage > _curHp)
+            if (damage >= _curHp)
             {
                 _curHp = 0;
                 return true;      // Not dead

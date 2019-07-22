@@ -44,6 +44,7 @@ namespace IdleGame
         private static string _newPlayerClass;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
+        public static Enemy[] Enemies;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -97,6 +98,8 @@ namespace IdleGame
             expTimer.Elapsed += GiveExp;
             expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")) * 1000;
             expTimer.Enabled = true;
+            
+            Enemies = Enemy.CreateMultiple(10);
 
             await Task.Delay(-1);
         }
