@@ -13,10 +13,10 @@ namespace IdleGame
 {
     public class GameModule : ModuleBase<SocketCommandContext>
     {
-        private const string Y = "\uD83C\uDDFE";
-        private const string N = "\uD83C\uDDF3";
-        private ulong _userId;
-        private ulong _deleteId;
+        protected const string Y = "\uD83C\uDDFE";
+        protected const string N = "\uD83C\uDDF3";
+        protected ulong UserId;
+        protected ulong DeleteId;
         private ulong _resetId;
 
         [Command("intro")]
@@ -32,7 +32,7 @@ namespace IdleGame
         public async Task NewPlayer()
         {
             var guildUser = (IGuildUser) Context.User;
-            string user = guildUser.Nickname;
+            string user = guildUser.Nickname == string.Empty ? Context.User.Username : guildUser.Nickname;
             await AddPlayer(Context.User.Id, user, Context.Channel.Id);
         }
 
@@ -182,7 +182,7 @@ namespace IdleGame
             
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will reset your character, including all progress. However, you will keep your inventory. \nThere is no going back! Are you sure?");
-            _userId = Context.User.Id;
+            UserId = Context.User.Id;
             await message.AddReactionAsync(new Emoji(Y));
             await message.AddReactionAsync(new Emoji(N));
             _resetId = message.Id;
@@ -195,35 +195,35 @@ namespace IdleGame
         {
             if (reaction.MessageId == _resetId)
             {
-                if (reaction.UserId == _userId)
+                if (reaction.UserId == UserId)
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        var player = PlayerList[_userId];
+                        var player = PlayerList[UserId];
                         switch (player.Class)
                         {
                             case "Captain":
-                                PlayerList[_userId] = new Captain(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                PlayerList[UserId] = new Captain(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
                                 break;
                             case "Marksman":
-                                PlayerList[_userId] = new Marksman(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                PlayerList[UserId] = new Marksman(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
                                 break;
                             case "Smuggler":
-                                PlayerList[_userId] = new Smuggler(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                PlayerList[UserId] = new Smuggler(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
                                 break;
                         }
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
                         UpdateDatabase();
                         _resetId = 0;
-                        _userId = 0;
+                        UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
                     }
                     else if (reaction.Emote.Name == N)
                     {
                         await reaction.Message.Value.DeleteAsync();
                         _resetId = 0;
-                        _userId = 0;
+                        UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
                     }
                 }
@@ -238,10 +238,10 @@ namespace IdleGame
             
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will delete your character, including all progress and inventory. \nThere is no going back! Are you sure?");
-            _userId = Context.User.Id;
+            UserId = Context.User.Id;
             await message.AddReactionAsync(new Emoji(Y));
             await message.AddReactionAsync(new Emoji(N));
-            _deleteId = message.Id;
+            DeleteId = message.Id;
             
             Context.Client.ReactionAdded += DeleteConfirmation;
         }
@@ -249,28 +249,28 @@ namespace IdleGame
         private async Task DeleteConfirmation(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
             SocketReaction reaction)
         {
-            if (reaction.MessageId == _deleteId)
+            if (reaction.MessageId == DeleteId)
             {
-                if (reaction.UserId == _userId)
+                if (reaction.UserId == UserId)
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        PlayerList.Remove(_userId);
-                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {_userId}");
-                        ExecuteSql($"DELETE FROM stats WHERE PlayerId = {_userId}");
-                        ExecuteSql($"DELETE FROM player WHERE Id = {_userId}");
+                        PlayerList.Remove(UserId);
+                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
+                        ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
-                        _deleteId = 0;
-                        _userId = 0;
+                        DeleteId = 0;
+                        UserId = 0;
                     }
                     else if (reaction.Emote.Name == N)
                     {
                         await reaction.Message.Value.DeleteAsync();
                         Context.Client.ReactionAdded -= DeleteConfirmation;
-                        _deleteId = 0;
-                        _userId = 0;
+                        DeleteId = 0;
+                        UserId = 0;
                     }
                 }
             }
@@ -289,7 +289,7 @@ namespace IdleGame
 
     [Group("")]
     [RequireOwner]
-    public class AdminModule : ModuleBase<SocketCommandContext>
+    public class AdminModule : GameModule
     {
         [Group("give")]
         public class GiveModule : ModuleBase<SocketCommandContext>
@@ -353,6 +353,56 @@ namespace IdleGame
                 PlayerList[playerId].Level += amount;
                 await ReplyAsync(
                     $"{PlayerList[playerId].Name} is now Level {PlayerList[playerId].Level}");
+            }
+        }
+
+        [Command("delete")]
+        public async Task DeleteCharacter([Remainder] string playerName)
+        {
+            var player = FindPlayer(playerName);
+            if (player.Id == 0)
+            {
+                await ReplyAsync("They no have character");
+                return;
+            }
+            
+            var message = await ReplyAsync(
+                $"{Context.User.Mention} this will delete {playerName}'s character, including all progress and inventory. \nThere is no going back! Are you sure?");
+            UserId = player.Id;
+            await message.AddReactionAsync(new Emoji(Y));
+            await message.AddReactionAsync(new Emoji(N));
+            DeleteId = message.Id;
+            
+            Context.Client.ReactionAdded += DeleteConfirmation;
+        }
+        
+        private async Task DeleteConfirmation(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
+            SocketReaction reaction)
+        {
+            if (reaction.MessageId == DeleteId)
+            {
+                if (reaction.UserId == Context.User.Id)
+                {
+                    if (reaction.Emote.Name == Y)
+                    {
+                        PlayerList.Remove(UserId);
+                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
+                        ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        await reaction.Message.Value.DeleteAsync();
+                        await ReplyAsync("Your character was successfully deleted.");
+                        Context.Client.ReactionAdded -= DeleteConfirmation;
+                        DeleteId = 0;
+                        UserId = 0;
+                    }
+                    else if (reaction.Emote.Name == N)
+                    {
+                        await reaction.Message.Value.DeleteAsync();
+                        Context.Client.ReactionAdded -= DeleteConfirmation;
+                        DeleteId = 0;
+                        UserId = 0;
+                    }
+                }
             }
         }
     }
