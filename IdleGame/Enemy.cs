@@ -14,7 +14,11 @@ namespace IdleGame
         {
             //Create random enemy
             var rand = new Random();
-            _name = "pleb";
+            _name += (char) rand.Next(65, 91);
+            for (int i = 0; i < rand.Next(2, 12); i++)
+            {
+                _name += (char) rand.Next(97, 123);
+            }
             _level = (uint) rand.Next(1, 11);
             _hp = _level * 10;
             _strength = _level * 2;
@@ -24,6 +28,21 @@ namespace IdleGame
         public string GetName()
         {
             return _name;
+        }
+
+        public uint GetStrength()
+        {
+            return _strength;
+        }
+
+        public uint GetDefence()
+        {
+            return _defence;
+        }
+
+        public string GetStats()
+        {
+            return $"Health: {_hp}\nStrength: {_strength}\nDefence: {_defence}";
         }
 
         public bool TakeDamage(uint damage)

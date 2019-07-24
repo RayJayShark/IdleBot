@@ -162,7 +162,7 @@ namespace IdleGame
                 Console.WriteLine(ex.ToString());
             }
         }
-        
+
         [Command("stats")]
         [Alias("stat")]
         public async Task GetStats()
@@ -172,6 +172,50 @@ namespace IdleGame
             
             var player = PlayerList[Context.User.Id];
             await ReplyAsync($"{player.Name}'s stats:\n``Health`` = {player.Stats.GetHealth() * 10}\n``Strength`` = {player.Stats.GetStrength()}\n``Defence`` = {player.Stats.GetDefence()}");
+        }
+        
+        [Command("listenemies")]
+        [Alias("lsenemies", "listen", "lsen", "le")]
+        public async Task ListEnemies()
+        {
+            var embed = new EmbedBuilder();
+            embed.Color = Color.DarkRed;
+            embed.Title = "Current Enemies";
+            int i = 1;
+            foreach (var e in Enemies)
+            {
+                embed.AddField(i + ". " +e.GetName(), e.GetStats());
+                i++;
+            }
+
+            await ReplyAsync("", false, embed.Build());
+        }
+
+        [Command("attack")]
+        public async Task AttackEnemy(uint enemyId)
+        {
+            if (!CharacterCreated(Context.User.Id))
+                return;
+
+            if (enemyId > Enemies.Count || enemyId == 0)
+            {
+                await ReplyAsync("Index out of bounds");
+                return;
+            }
+
+            var index = (int)enemyId - 1;
+            var player = PlayerList[Context.User.Id];
+            var enemy = Enemies[index];
+            if (player.Stats.GetStrength() <= enemy.GetDefence())
+            {
+                if (enemy.TakeDamage(1))
+                    Enemies.RemoveAt(index);
+            }
+            else
+            {
+                if (enemy.TakeDamage(player.Stats.GetStrength() - enemy.GetDefence()))
+                    Enemies.RemoveAt(index);
+            }
         }
         
         [Command("reset")]

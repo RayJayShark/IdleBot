@@ -43,8 +43,8 @@ namespace IdleGame
         private static string _newPlayerFaction;
         private static string _newPlayerClass;
         public static Dictionary<ulong, Player> PlayerList;
-        public static Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
-        public static Enemy[] Enemies;
+        public static readonly Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
+        public static List<Enemy> Enemies = new List<Enemy>();
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -99,7 +99,7 @@ namespace IdleGame
             expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")) * 1000;
             expTimer.Enabled = true;
             
-            Enemies = Enemy.CreateMultiple(10);
+            Enemies.AddRange(Enemy.CreateMultiple(10));
 
             await Task.Delay(-1);
         }
@@ -294,7 +294,7 @@ namespace IdleGame
 
             try
             {
-                _conn.Execute($"INSERT INTO player (Id,Name,Faction,Class) VALUES({_newPlayerId}, '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}')");
+                _conn.Execute($"INSERT INTO player (Id,Name,Faction,Class,CurHp) VALUES({_newPlayerId}, '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}', {PlayerList[_newPlayerId].Stats.GetHealth()})");
                 _conn.Execute($"INSERT INTO inventory VALUES({_newPlayerId}, 1, 10)");
                 _conn.Execute($"INSERT INTO stats VALUES({_newPlayerId}, {PlayerList[_newPlayerId].Stats.GetHealth()}, {PlayerList[_newPlayerId].Stats.GetStrength()}, {PlayerList[_newPlayerId].Stats.GetDefence()})");
                 PlayerList[_newPlayerId].Inventory.Add(1, 10);

@@ -14,7 +14,7 @@ namespace IdleGame.Classes
             Name = name;
             Faction = faction;
             Class = "Smuggler";
-            _curHp = 10;
+            _curHp = 100;
             Money = 10;
             Level = 1;
             Exp = 0;
