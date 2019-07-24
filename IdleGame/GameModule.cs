@@ -179,16 +179,27 @@ namespace IdleGame
         public async Task ListEnemies()
         {
             var embed = new EmbedBuilder();
-            embed.Color = Color.DarkRed;
-            embed.Title = "Current Enemies";
+            var page = new Paginator();
+            page.Color = Color.DarkRed;
+            page.Title = "Current Enemies";
             int i = 1;
             foreach (var e in Enemies)
             {
                 embed.AddField(i + ". " +e.GetName(), e.GetStats());
+                if (i % 3 == 0)
+                {
+                    page.AddPage(embed);
+                    embed = new EmbedBuilder();
+                }
                 i++;
             }
 
-            await ReplyAsync("", false, embed.Build());
+            if (embed.Fields.Count > 0)
+            {
+                page.AddPage(embed);
+            }
+
+            page.SendMessage(Context);
         }
 
         [Command("attack")]
