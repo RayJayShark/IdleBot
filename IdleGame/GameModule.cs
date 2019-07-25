@@ -163,17 +163,6 @@ namespace IdleGame
             }
         }
 
-        [Command("stats")]
-        [Alias("stat")]
-        public async Task GetStats()
-        {
-            if (!CharacterCreated(Context.User.Id))
-                return;
-            
-            var player = PlayerList[Context.User.Id];
-            await ReplyAsync($"{player.Name}'s stats:\n``Health`` = {player.Stats.GetHealth() * 10}\n``Strength`` = {player.Stats.GetStrength()}\n``Defence`` = {player.Stats.GetDefence()}");
-        }
-        
         [Command("listenemies")]
         [Alias("lsenemies", "listen", "lsen", "le")]
         public async Task ListEnemies()
