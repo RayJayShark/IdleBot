@@ -389,7 +389,7 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.Exp}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
                 _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.Id}");
                 
                 foreach (var i in p.Value.Inventory)
@@ -424,8 +424,7 @@ namespace IdleGame
                 var user = guild.GetUser(p.Value.Id);
                 if (user.VoiceState.HasValue && user.VoiceChannel.Id != guild.AFKChannel.Id)
                 {
-                    PlayerList[p.Key].Exp += 1;
-                    if (PlayerList[p.Key].LevelUp())
+                    if (PlayerList[p.Key].GiveExp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_EXP"))))
                     {
                         guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
                             .SendMessageAsync(

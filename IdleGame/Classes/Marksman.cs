@@ -7,6 +7,7 @@ namespace IdleGame.Classes
     {
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         private uint _curHp;
+        private uint _exp;
         
         public Marksman(ulong id, string name, string faction)
         {
@@ -17,7 +18,7 @@ namespace IdleGame.Classes
             _curHp = 70;
             Money = 10;
             Level = 1;
-            Exp = 0;
+            _exp = 0;
             Stats = new PlayerStats(70 ,10, 7);
         }
         
@@ -30,7 +31,7 @@ namespace IdleGame.Classes
             _curHp = CurHp;
             this.Money = Money;
             this.Level = Level;
-            this.Exp = Exp;
+            this._exp = Exp;
             _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset.Add(TimeSpan.FromHours(1))).ToUniversalTime().ToTimestamp();
         }
         
@@ -43,7 +44,7 @@ namespace IdleGame.Classes
             _curHp = CurHp;
             this.Money = Money;
             this.Level = Level;
-            this.Exp = Exp;
+            this._exp = Exp;
             _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset).ToUniversalTime().ToTimestamp();
             this.Stats = Stats;
         }
@@ -75,11 +76,22 @@ namespace IdleGame.Classes
             return false;         // Not dead
         }
         
+        public override uint GetExp()
+        {
+            return _exp;
+        }
+        
+        public override bool GiveExp(uint exp)
+        {
+            _exp += exp;
+            return LevelUp();
+        }
+        
         public override bool LevelUp()
         {
-            if (Exp >= 10 * Level)
+            if (_exp >= 10 * Level)
             {
-                Exp -= 10 * Level;
+                _exp -= 10 * Level;
                 Level++;
                 if (Level % 10 == 0)
                 {
@@ -97,6 +109,7 @@ namespace IdleGame.Classes
                 {
                     Stats.AddDefaults();
                 }
+                LevelUp();
                 return true;    // Leveled Up!
             }
 

@@ -26,5 +26,15 @@ namespace IdleGame.Classes
         {
             throw new System.NotImplementedException();
         }
+
+        public override uint GetExp()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override bool GiveExp(uint exp)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

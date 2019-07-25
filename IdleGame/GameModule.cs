@@ -52,9 +52,8 @@ namespace IdleGame
                         $"You still have {(double.Parse(Environment.GetEnvironmentVariable("BOOST_HOURS")) - hour):N} hours until you can boost again.");
                     return;
                 }
-
-                PlayerList[userId].Exp += 10;
-                if (PlayerList[userId].LevelUp())
+                
+                if (PlayerList[userId].GiveExp(10))
                 {
                     await Context.Guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
                         .SendMessageAsync(
@@ -124,7 +123,7 @@ namespace IdleGame
                 if (!CharacterCreated(Context.User.Id))
                     return;
                 player = PlayerList[Context.User.Id];
-                await ReplyAsync($"You are currently Level {player.Level} with {player.Exp} XP ({(player.Level * 10) - player.Exp} to the next level)");
+                await ReplyAsync($"You are currently Level {player.Level} with {player.GetExp()} XP ({(player.Level * 10) - player.GetExp()} to the next level)");
             }
             else
             {
@@ -135,7 +134,7 @@ namespace IdleGame
                 }
                 else
                 {
-                    await ReplyAsync($"{player.Name} is currently Level {player.Level} with {player.Exp} XP ({(player.Level * 10) - player.Exp} to the next level)");
+                    await ReplyAsync($"{player.Name} is currently Level {player.Level} with {player.GetExp()} XP ({(player.Level * 10) - player.GetExp()} to the next level)");
                 }
             }
         }
@@ -195,6 +194,7 @@ namespace IdleGame
         [Command("attack")]
         public async Task AttackEnemy(uint enemyId)
         {
+            //TODO: Can't attack with no health
             if (!CharacterCreated(Context.User.Id))
                 return;
 
@@ -211,6 +211,7 @@ namespace IdleGame
             {
                 if (enemy.TakeDamage(1))
                 {
+                    player.GiveExp(enemy.GetLevel() * 10);
                     Enemies.RemoveAt(index);
                     return;
                 }
@@ -219,6 +220,7 @@ namespace IdleGame
             {
                 if (enemy.TakeDamage(player.Stats.GetStrength() - enemy.GetDefence()))
                 {
+                    player.GiveExp(enemy.GetLevel() * 10);
                     Enemies.RemoveAt(index);
                     return;
                 }
@@ -392,10 +394,9 @@ namespace IdleGame
                     return;
                 }
                 
-                PlayerList[playerId].Exp += amount;
-                PlayerList[playerId].LevelUp();
+                PlayerList[playerId].GiveExp(amount);
                 await ReplyAsync(
-                    $"{PlayerList[playerId].Name} is now {PlayerList[playerId].Level} with {PlayerList[playerId].Exp} xp");
+                    $"{PlayerList[playerId].Name} is now {PlayerList[playerId].Level} with {PlayerList[playerId].GetExp()} xp");
             }
 
             [Command("level")]

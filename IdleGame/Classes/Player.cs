@@ -12,7 +12,6 @@ namespace IdleGame.Classes
         public string Class;
         public uint Money;
         public uint Level;
-        public uint Exp;
         private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
@@ -21,6 +20,10 @@ namespace IdleGame.Classes
         {
             
         }
+
+        public abstract uint GetExp();
+        
+        public abstract bool GiveExp(uint exp);
         
         public abstract bool LevelUp();
 

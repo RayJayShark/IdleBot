@@ -30,6 +30,11 @@ namespace IdleGame
             return _name;
         }
 
+        public uint GetLevel()
+        {
+            return _level;
+        }
+
         public uint GetStrength()
         {
             return _strength;
