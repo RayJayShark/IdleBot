@@ -432,7 +432,7 @@ namespace IdleGame
                                 $"{_client.GetUser(p.Key).Mention} has leveled up! They are now Level {PlayerList[p.Key].Level}");
                     }
                 }
-                PlayerList[p.Key].GiveHp(1);
+                PlayerList[p.Key].GiveHp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_HP")));
             }
             Console.WriteLine($"{GetTimeStamp()} Game\t     Exp Given!");
             UpdateDatabase();
