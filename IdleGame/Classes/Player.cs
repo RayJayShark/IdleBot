@@ -10,7 +10,6 @@ namespace IdleGame.Classes
         public string Name;
         public string Faction;
         public string Class;
-        private uint _curHp;
         public uint Money;
         public uint Level;
         public uint Exp;
@@ -40,32 +39,12 @@ namespace IdleGame.Classes
             _boost = DateTime.UtcNow.ToTimestamp();
         }
 
-        public uint GetCurrentHp()
-        {
-            return _curHp;
-        }
+        public abstract uint GetCurrentHp();
 
-        public void GiveHp(uint health)
-        {
-            _curHp += health;
+        public abstract void GiveHp(uint health);
 
-            if (_curHp > Stats.GetHealth())
-            {
-                _curHp = Stats.GetHealth();
-            }
-        }
+        public abstract bool TakeDamage(uint damage);
 
-        public bool TakeDamage(uint damage)
-        {
-            if (damage >= _curHp)
-            {
-                _curHp = 0;
-                return true;      // Not dead
-            }
-
-            _curHp -= damage;
-            return false;         // Not dead
-        }
     }
 
     public class PlayerStats

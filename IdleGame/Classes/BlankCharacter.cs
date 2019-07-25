@@ -11,5 +11,20 @@ namespace IdleGame.Classes
         {
             return false;
         }
+
+        public override uint GetCurrentHp()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override void GiveHp(uint health)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public override bool TakeDamage(uint damage)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

@@ -27,7 +27,7 @@ namespace IdleGame.Classes
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;
-            this._curHp = CurHp;
+            _curHp = CurHp;
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
@@ -40,12 +40,39 @@ namespace IdleGame.Classes
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;
-            this._curHp = CurHp;
+            _curHp = CurHp;
             this.Money = Money;
             this.Level = Level;
             this.Exp = Exp;
             _boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset).ToUniversalTime().ToTimestamp();
             this.Stats = Stats;
+        }
+        
+        public override uint GetCurrentHp()
+        {
+            return _curHp;
+        }
+
+        public override void GiveHp(uint health)
+        {
+            _curHp += health;
+
+            if (_curHp > Stats.GetHealth())
+            {
+                _curHp = Stats.GetHealth();
+            }
+        }
+
+        public override bool TakeDamage(uint damage)
+        {
+            if (damage >= _curHp)
+            {
+                _curHp = 0;
+                return true;      // dead
+            }
+
+            _curHp -= damage;
+            return false;         // Not dead
         }
         
         public override bool LevelUp()

@@ -110,7 +110,7 @@ namespace IdleGame
             embed.Title = player.Name;
             embed.Description = player.Faction + "\n" + player.Class;
             embed.AddField("Stats:",
-                $"Health: {player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
+                $"Health: {player.GetCurrentHp()}/{player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
 
             await ReplyAsync("", false, embed.Build());
         }
@@ -210,12 +210,27 @@ namespace IdleGame
             if (player.Stats.GetStrength() <= enemy.GetDefence())
             {
                 if (enemy.TakeDamage(1))
+                {
                     Enemies.RemoveAt(index);
+                    return;
+                }
             }
             else
             {
                 if (enemy.TakeDamage(player.Stats.GetStrength() - enemy.GetDefence()))
+                {
                     Enemies.RemoveAt(index);
+                    return;
+                }
+            }
+            
+            if (enemy.GetStrength() <= player.Stats.GetDefence())
+            {
+                player.TakeDamage(1);
+            }
+            else
+            {
+                player.TakeDamage(enemy.GetStrength() - player.Stats.GetDefence());
             }
         }
         
