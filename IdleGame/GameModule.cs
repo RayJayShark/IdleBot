@@ -72,6 +72,7 @@ namespace IdleGame
         }
         
         [Command("info")]
+        [Alias("stats", "stat")]
         public async Task GetPlayerInfo([Remainder] string name = "")
         {
             Player player;
