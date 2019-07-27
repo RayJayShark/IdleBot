@@ -60,7 +60,7 @@ namespace IdleGame.Modules
             {
                 if (c.Name == command.ToLower())
                 {
-                    embed.Title = c.Name;
+                    embed.Title = c.Name + " " + (c.Remarks ?? "");
                     embed.Description = (c.Summary ?? "No description provided.") + "\n";
                     embed.Description += $"Aliases: {string.Join(", ", c.Aliases.Where(x => x != c.Name).ToArray())}";
                     found = true;
