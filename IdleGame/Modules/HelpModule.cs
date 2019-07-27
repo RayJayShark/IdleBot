@@ -35,7 +35,7 @@ namespace IdleGame.Modules
                     var field = new EmbedFieldBuilder {Name = module.Name + ":"};
                     foreach (var command in module.Commands)
                     {
-                        field.Value += $"**{command.Name}**: {command.Summary ?? "No description provided."}\n";
+                        field.Value += $"**{command.Name}** {command.Remarks ?? ""}: {command.Summary ?? "No description provided."}\n";
                         field.Value +=
                             $"Aliases: {string.Join(", ", command.Aliases.Where(x => x != command.Name).ToArray())}\n";
                     }
