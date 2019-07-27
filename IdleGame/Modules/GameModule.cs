@@ -7,6 +7,7 @@ using IdleGame.Classes;
 
 namespace IdleGame.Modules
 {
+    [Name("Game Commands")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
         protected const string Y = "\uD83C\uDDFE";
@@ -352,12 +353,15 @@ namespace IdleGame.Modules
         }
     }
 
+    [Name("Admin Commands")]
     [Group("")]
+    [Remarks("admin")]
     [RequireOwner]
     public class AdminModule : GameModule
     {
+        [Name("Admin Give Commands")]
         [Group("give")]
-        public class GiveModule : ModuleBase<SocketCommandContext>
+        public class GiveModule : AdminModule
         {
 
             [Command("item")]

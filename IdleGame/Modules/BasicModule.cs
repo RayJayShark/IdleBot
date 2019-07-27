@@ -4,9 +4,9 @@ using Discord.Commands;
 
 namespace IdleGame.Modules
 {
+    [Name("Basic Commands")]
     public class BasicModule : ModuleBase<SocketCommandContext>
     {
-
         [Command("ping")]
         public Task PingAsync() 
             => ReplyAsync("pong!");
