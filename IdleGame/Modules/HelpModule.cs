@@ -16,7 +16,7 @@ namespace IdleGame.Modules
         {
             _service = service;
         }
-
+        
         [Command("help")]
         [Summary("Lists all commands powered by this bot.")] 
         [Alias("list")]
@@ -49,7 +49,7 @@ namespace IdleGame.Modules
                 await ReplyAsync("No commands are currently loaded, what? This is a command 🤔.");
             }
         }
-
+        
         [Command("help")]
         [Summary("Gives a description of the specified command.")]
         public async Task ListCommands(string command)
@@ -58,7 +58,7 @@ namespace IdleGame.Modules
             var embed = new EmbedBuilder();
             foreach (var c in _service.Commands)
             {
-                if (c.Name == command.ToLower())
+                if (c.Name == command.ToLower() || c.Aliases.Contains(command.ToLower()))
                 {
                     embed.Title = c.Name + " " + (c.Remarks ?? "");
                     embed.Description = (c.Summary ?? "No description provided.") + "\n";
