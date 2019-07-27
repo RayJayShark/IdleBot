@@ -45,6 +45,7 @@ namespace IdleGame
         public static Dictionary<ulong, Player> PlayerList;
         public static readonly Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
         public static List<Enemy> Enemies = new List<Enemy>();
+        public static Timer EnemyTimer;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -99,7 +100,12 @@ namespace IdleGame
             expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")) * 1000;
             expTimer.Enabled = true;
             
+            //TODO: Make timer us env variable
             Enemies.AddRange(Enemy.CreateMultiple(10));
+            EnemyTimer = new Timer();
+            EnemyTimer.Elapsed += RefreshEnemies;
+            EnemyTimer.Interval = 60 * 60 * 1000;
+            EnemyTimer.Enabled = true;
 
             await Task.Delay(-1);
         }
@@ -144,6 +150,12 @@ namespace IdleGame
         private async Task HandleDisconnect(Exception ex)
         {
             await TestMySqlConnection();
+        }
+
+        private static void RefreshEnemies(object source, ElapsedEventArgs e)
+        {
+            Enemies.Clear();
+            Enemies.AddRange(Enemy.CreateMultiple(10));
         }
 
         public static async Task Shutdown()
