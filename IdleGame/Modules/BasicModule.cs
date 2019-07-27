@@ -19,6 +19,7 @@ namespace IdleGame.Modules
         }
 
         [Command("emoji")]
+        [Remarks("<emoji>")]
         public async Task GetEmojiCode(string e)
         {
             var emoji = new Emoji(e);

@@ -69,6 +69,7 @@ namespace IdleGame.Modules
         
         [Command("info")]
         [Alias("stats", "stat")]
+        [Remarks("[player]")]
         public async Task GetPlayerInfo([Remainder] string name = "")
         {
             Player player;
@@ -112,6 +113,7 @@ namespace IdleGame.Modules
         }
         
         [Command("level")]
+        [Remarks("[player]")]
         public async Task CheckLevel([Remainder] string name = "")
         {
             Player player;
@@ -189,6 +191,7 @@ namespace IdleGame.Modules
         }
 
         [Command("attack")]
+        [Remarks("<enemyId>")]
         public async Task AttackEnemy(uint enemyId)
         {
             //TODO: Can't attack with no health
@@ -365,6 +368,7 @@ namespace IdleGame.Modules
         {
 
             [Command("item")]
+            [Remarks("<itemId> <amount> [player]")]
             public async Task GiveItem(uint itemId, uint amount, [Remainder] string playerName = "")
             {
                 ulong playerId = playerName== string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
@@ -390,6 +394,7 @@ namespace IdleGame.Modules
 
             [Command("exp")]
             [Alias("xp")]
+            [Remarks("<amount> [player]")]
             //TODO: Use levelup command instead
             public async Task GiveExp(uint amount, [Remainder] string playerName = "")
             {
@@ -408,6 +413,7 @@ namespace IdleGame.Modules
 
             [Command("level")]
             [Alias("lvl")]
+            [Remarks("<amount> [player]")]
             public async Task GiveLevel(uint amount, [Remainder] string playerName = "")
             {
                 var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
@@ -425,6 +431,7 @@ namespace IdleGame.Modules
         }
 
         [Command("delete")]
+        [Remarks("<player>")]
         public async Task DeleteCharacter([Remainder] string playerName)
         {
             var player = Program.FindPlayer(playerName);
