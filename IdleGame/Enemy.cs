@@ -4,13 +4,13 @@ namespace IdleGame
 {
     public class Enemy
     {
-        private string _name;
-        private uint _level;
+        private readonly string _name;
+        private readonly uint _level;
         private uint _hp;
-        private uint _strength;
-        private uint _defence;
+        private readonly uint _strength;
+        private readonly uint _defence;
 
-        public Enemy()
+        private Enemy()
         {
             //Create random enemy
             var rand = new Random();
@@ -20,9 +20,9 @@ namespace IdleGame
                 _name += (char) rand.Next(97, 123);
             }
             _level = (uint) rand.Next(1, 11);
-            _hp = _level * 10;
-            _strength = _level * 2;
-            _defence = _level * 2;
+            _hp = (uint) rand.Next((int) _level * 2, (int) _level * 5);
+            _strength = (uint) rand.Next((int) _level, (int) _level * 2);
+            _defence = (uint) rand.Next((int) _level, (int) _level * 2);
         }
 
         public string GetName()
