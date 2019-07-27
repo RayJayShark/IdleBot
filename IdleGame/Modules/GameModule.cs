@@ -1,15 +1,11 @@
 using System;
-using System.Globalization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using IdleGame.Classes;
-using static IdleGame.Program;
 
-
-namespace IdleGame
+namespace IdleGame.Modules
 {
     public class GameModule : ModuleBase<SocketCommandContext>
     {
@@ -33,7 +29,7 @@ namespace IdleGame
         {
             var guildUser = (IGuildUser) Context.User;
             string user = guildUser.Nickname == string.Empty ? Context.User.Username : guildUser.Nickname;
-            await AddPlayer(Context.User.Id, user, Context.Channel.Id);
+            await Program.AddPlayer(Context.User.Id, user, Context.Channel.Id);
         }
 
         [Command("boost")]
@@ -45,7 +41,7 @@ namespace IdleGame
 
             try
             {
-                var hour = PlayerList[userId].HoursSinceLastBoost();
+                var hour = Program.PlayerList[userId].HoursSinceLastBoost();
                 if (hour < int.Parse(Environment.GetEnvironmentVariable("BOOST_HOURS")))
                 {
                     await ReplyAsync(
@@ -53,15 +49,15 @@ namespace IdleGame
                     return;
                 }
                 
-                if (PlayerList[userId].GiveExp(10))
+                if (Program.PlayerList[userId].GiveExp(10))
                 {
                     await Context.Guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
                         .SendMessageAsync(
-                            $"{Context.User.Mention} has leveled up! They are now Level {PlayerList[userId].Level}");
+                            $"{Context.User.Mention} has leveled up! They are now Level {Program.PlayerList[userId].Level}");
                 }
 
-                PlayerList[userId].ResetBoost();
-                UpdateDatabase();
+                Program.PlayerList[userId].ResetBoost();
+                Program.UpdateDatabase();
                 await ReplyAsync("You've been boosted!");
             }
             catch (Exception ex)
@@ -79,11 +75,11 @@ namespace IdleGame
             {
                 if (!CharacterCreated(Context.User.Id))
                     return;
-                player = PlayerList[Context.User.Id];
+                player = Program.PlayerList[Context.User.Id];
             }
             else
             {
-                player = FindPlayer(name);
+                player = Program.FindPlayer(name);
                 if (player.Id == 0)
                 {
                     await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
@@ -122,12 +118,12 @@ namespace IdleGame
             {
                 if (!CharacterCreated(Context.User.Id))
                     return;
-                player = PlayerList[Context.User.Id];
+                player = Program.PlayerList[Context.User.Id];
                 await ReplyAsync($"You are currently Level {player.Level} with {player.GetExp()} XP ({(player.Level * 10) - player.GetExp()} to the next level)");
             }
             else
             {
-                player = FindPlayer(name);
+                player = Program.FindPlayer(name);
                 if (player.Id == 0)
                 {
                     await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
@@ -148,7 +144,7 @@ namespace IdleGame
             //TODO: Make prettier embed
             try
             {
-                var player = PlayerList[Context.User.Id];
+                var player = Program.PlayerList[Context.User.Id];
                 var embed = new EmbedBuilder {Title = player.Name + "'s inventory"};
                 foreach (var i in player.Inventory)
                 {
@@ -172,7 +168,7 @@ namespace IdleGame
             page.Color = Color.DarkRed;
             page.Title = "Current Enemies";
             int i = 1;
-            foreach (var e in Enemies)
+            foreach (var e in Program.Enemies)
             {
                 embed.AddField(i + ". " +e.GetName(), e.GetStats());
                 if (i % 3 == 0)
@@ -195,24 +191,31 @@ namespace IdleGame
         public async Task AttackEnemy(uint enemyId)
         {
             //TODO: Can't attack with no health
+            //TODO: Add replies and updates
+            //TODO: Make a better algorithm
             if (!CharacterCreated(Context.User.Id))
                 return;
 
-            if (enemyId > Enemies.Count || enemyId == 0)
+            if (enemyId > Program.Enemies.Count || enemyId == 0)
             {
                 await ReplyAsync("Index out of bounds");
                 return;
             }
 
             var index = (int)enemyId - 1;
-            var player = PlayerList[Context.User.Id];
-            var enemy = Enemies[index];
+            var player = Program.PlayerList[Context.User.Id];
+            if (player.GetCurrentHp() == 0)
+            {
+                await ReplyAsync("You have no health! Try eating a taco or waiting a bit.");
+                return;
+            }
+            var enemy = Program.Enemies[index];
             if (player.Stats.GetStrength() <= enemy.GetDefence())
             {
                 if (enemy.TakeDamage(1))
                 {
                     player.GiveExp(enemy.GetLevel() * 10);
-                    Enemies.RemoveAt(index);
+                    Program.Enemies.RemoveAt(index);
                     return;
                 }
             }
@@ -221,7 +224,7 @@ namespace IdleGame
                 if (enemy.TakeDamage(player.Stats.GetStrength() - enemy.GetDefence()))
                 {
                     player.GiveExp(enemy.GetLevel() * 10);
-                    Enemies.RemoveAt(index);
+                    Program.Enemies.RemoveAt(index);
                     return;
                 }
             }
@@ -261,22 +264,22 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        var player = PlayerList[UserId];
+                        var player = Program.PlayerList[UserId];
                         switch (player.Class)
                         {
                             case "Captain":
-                                PlayerList[UserId] = new Captain(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                Program.PlayerList[UserId] = new Captain(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
                                 break;
                             case "Marksman":
-                                PlayerList[UserId] = new Marksman(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                Program.PlayerList[UserId] = new Marksman(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
                                 break;
                             case "Smuggler":
-                                PlayerList[UserId] = new Smuggler(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                Program.PlayerList[UserId] = new Smuggler(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
                                 break;
                         }
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
-                        UpdateDatabase();
+                        Program.UpdateDatabase();
                         _resetId = 0;
                         UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
@@ -317,10 +320,10 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        PlayerList.Remove(UserId);
-                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
-                        ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
-                        ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        Program.PlayerList.Remove(UserId);
+                        Program.ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        Program.ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
+                        Program.ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
@@ -340,7 +343,7 @@ namespace IdleGame
         
         private bool CharacterCreated(ulong userId)
         {
-            if (PlayerList.ContainsKey(userId))
+            if (Program.PlayerList.ContainsKey(userId))
             {
                 return true;
             }
@@ -360,25 +363,25 @@ namespace IdleGame
             [Command("item")]
             public async Task GiveItem(uint itemId, uint amount, [Remainder] string playerName = "")
             {
-                ulong playerId = playerName== string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
+                ulong playerId = playerName== string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
 
-                if (!PlayerList.ContainsKey(playerId))
+                if (!Program.PlayerList.ContainsKey(playerId))
                 {
                     await ReplyAsync("Character doesn't exist.");
                     return;
                 }
                 
-                if (PlayerList[playerId].Inventory.ContainsKey(itemId))
+                if (Program.PlayerList[playerId].Inventory.ContainsKey(itemId))
                 {
-                    PlayerList[playerId].Inventory[itemId] += amount;
+                    Program.PlayerList[playerId].Inventory[itemId] += amount;
                 }
                 else
                 {
-                    PlayerList[playerId].Inventory.Add(itemId, amount);
+                    Program.PlayerList[playerId].Inventory.Add(itemId, amount);
                 }
 
                 await ReplyAsync(
-                    $"{PlayerList[playerId].Name} now has {PlayerList[playerId].Inventory[itemId]} {itemMap[itemId]}");
+                    $"{Program.PlayerList[playerId].Name} now has {Program.PlayerList[playerId].Inventory[itemId]} {Program.itemMap[itemId]}");
             }
 
             [Command("exp")]
@@ -386,41 +389,41 @@ namespace IdleGame
             //TODO: Use levelup command instead
             public async Task GiveExp(uint amount, [Remainder] string playerName = "")
             {
-                var playerId = playerName == string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
+                var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
                 
-                if (!PlayerList.ContainsKey(playerId))
+                if (!Program.PlayerList.ContainsKey(playerId))
                 {
                     await ReplyAsync("Character doesn't exist.");
                     return;
                 }
                 
-                PlayerList[playerId].GiveExp(amount);
+                Program.PlayerList[playerId].GiveExp(amount);
                 await ReplyAsync(
-                    $"{PlayerList[playerId].Name} is now {PlayerList[playerId].Level} with {PlayerList[playerId].GetExp()} xp");
+                    $"{Program.PlayerList[playerId].Name} is now {Program.PlayerList[playerId].Level} with {Program.PlayerList[playerId].GetExp()} xp");
             }
 
             [Command("level")]
             [Alias("lvl")]
             public async Task GiveLevel(uint amount, [Remainder] string playerName = "")
             {
-                var playerId = playerName == string.Empty ? Context.User.Id : FindPlayer(playerName).Id;
+                var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
                 
-                if (!PlayerList.ContainsKey(playerId))
+                if (!Program.PlayerList.ContainsKey(playerId))
                 {
                     await ReplyAsync("Character doesn't exist.");
                     return;
                 }
                 
-                PlayerList[playerId].Level += amount;
+                Program.PlayerList[playerId].Level += amount;
                 await ReplyAsync(
-                    $"{PlayerList[playerId].Name} is now Level {PlayerList[playerId].Level}");
+                    $"{Program.PlayerList[playerId].Name} is now Level {Program.PlayerList[playerId].Level}");
             }
         }
 
         [Command("delete")]
         public async Task DeleteCharacter([Remainder] string playerName)
         {
-            var player = FindPlayer(playerName);
+            var player = Program.FindPlayer(playerName);
             if (player.Id == 0)
             {
                 await ReplyAsync("They no have character");
@@ -446,10 +449,10 @@ namespace IdleGame
                 {
                     if (reaction.Emote.Name == Y)
                     {
-                        PlayerList.Remove(UserId);
-                        ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
-                        ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
-                        ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        Program.PlayerList.Remove(UserId);
+                        Program.ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        Program.ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
+                        Program.ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;

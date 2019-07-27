@@ -1,9 +1,8 @@
-using System;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 
-namespace IdleGame
+namespace IdleGame.Modules
 {
     public class BasicModule : ModuleBase<SocketCommandContext>
     {
@@ -24,6 +23,11 @@ namespace IdleGame
         {
             var emoji = new Emoji(e);
             await ReplyAsync("```" + emoji.Name + "```");
+        }
+
+        public async Task Help()
+        {
+            
         }
     }
 }
