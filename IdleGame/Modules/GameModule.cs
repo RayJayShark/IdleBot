@@ -268,7 +268,7 @@ namespace IdleGame.Modules
                 ? 1
                 : enemy.GetStrength() - player.Stats.GetDefence();
             player.TakeDamage(damageToPlayer);
-            await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} left, don't give up!");
+            await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} HP left, don't give up!");
         }
         
         [Command("reset")]
