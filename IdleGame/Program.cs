@@ -45,7 +45,7 @@ namespace IdleGame
         public static Dictionary<ulong, Player> PlayerList;
         public static readonly Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
         public static List<Enemy> Enemies = new List<Enemy>();
-        public static Timer EnemyTimer;
+        private static Timer _enemyTimer;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -102,10 +102,10 @@ namespace IdleGame
             
             //TODO: Make timer us env variable
             Enemies.AddRange(Enemy.CreateMultiple(10));
-            EnemyTimer = new Timer();
-            EnemyTimer.Elapsed += RefreshEnemies;
-            EnemyTimer.Interval = 60 * 60 * 1000;
-            EnemyTimer.Enabled = true;
+            _enemyTimer = new Timer();
+            _enemyTimer.Elapsed += RefreshEnemies;
+            _enemyTimer.Interval = 60 * 60 * 1000;
+            _enemyTimer.Enabled = true;
 
             await Task.Delay(-1);
         }
