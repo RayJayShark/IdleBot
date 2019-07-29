@@ -151,7 +151,7 @@ namespace IdleGame.Modules
                 var embed = new EmbedBuilder {Title = player.Name + "'s inventory"};
                 foreach (var i in player.Inventory)
                 {
-                    embed.Description +=  Program.itemMap[i.Key] + " " + i.Value + "\n";
+                    embed.Description +=  Program.ItemMap[i.Key].Name + " " + i.Value + "\n";
                 }
 
                 await ReplyAsync("", false, embed.Build());
@@ -165,17 +165,40 @@ namespace IdleGame.Modules
         [Command("use")]
         [Alias("eat")]
         [Remarks("<item>")]
-        public async Task UseItem(string item)
+        public async Task UseItem(string itemName)
         {
             if (!CharacterCreated(Context.User.Id))
                 return;
 
-            if (string.IsNullOrEmpty(item))
+            if (string.IsNullOrEmpty(itemName))
             {
-                await ReplyAsync("");
+                await ReplyAsync($"Command for using items in your inventory.\nUsage: *{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}use <item>*");
                 return;
             }
-            
+
+            var itemId = Program.FindItemId(itemName);
+            if (itemId == 0)
+            {
+                await ReplyAsync($"\"{itemName}\" isn't an item.");
+                return;
+            }
+
+            var player = Program.PlayerList[Context.User.Id];
+            if (!player.Inventory.ContainsKey(itemId))
+            {
+                await ReplyAsync($"You don't have a {itemName}.");
+                return;
+            }
+
+            var hpToGive = Program.ItemMap[itemId].Value;
+            player.GiveHp(hpToGive);
+            player.Inventory[itemId] -= 1;
+            if (player.Inventory[itemId] == 0)
+            {
+                player.Inventory.Remove(itemId);
+            }
+
+            await ReplyAsync($"You ate a {itemName} and gained {hpToGive} HP!");
         }
 
         [Command("listenemies")]
@@ -394,7 +417,7 @@ namespace IdleGame.Modules
                 }
 
                 await ReplyAsync(
-                    $"{Program.PlayerList[playerId].Name} now has {Program.PlayerList[playerId].Inventory[itemId]} {Program.itemMap[itemId]}");
+                    $"{Program.PlayerList[playerId].Name} now has {Program.PlayerList[playerId].Inventory[itemId]} {Program.ItemMap[itemId]}");
             }
 
             [Command("exp")]
