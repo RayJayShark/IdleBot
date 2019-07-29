@@ -162,6 +162,22 @@ namespace IdleGame.Modules
             }
         }
 
+        [Command("use")]
+        [Alias("eat")]
+        [Remarks("<item>")]
+        public async Task UseItem(string item)
+        {
+            if (!CharacterCreated(Context.User.Id))
+                return;
+
+            if (string.IsNullOrEmpty(item))
+            {
+                await ReplyAsync("");
+                return;
+            }
+            
+        }
+
         [Command("listenemies")]
         [Alias("lsenemies", "listen", "lsen", "le")]
         public async Task ListEnemies()
@@ -194,8 +210,6 @@ namespace IdleGame.Modules
         [Remarks("<enemyId>")]
         public async Task AttackEnemy(uint enemyId)
         {
-            //TODO: Can't attack with no health
-            //TODO: Add replies and updates
             //TODO: Make a better algorithm
             if (!CharacterCreated(Context.User.Id))
                 return;
@@ -214,33 +228,24 @@ namespace IdleGame.Modules
                 return;
             }
             var enemy = Program.Enemies[index];
-            if (player.Stats.GetStrength() <= enemy.GetDefence())
+
+            var damageToEnemy = player.Stats.GetStrength() <= enemy.GetDefence() 
+                ? 1 
+                : player.Stats.GetStrength() - enemy.GetDefence();
+            if (enemy.TakeDamage(damageToEnemy))
             {
-                if (enemy.TakeDamage(1))
-                {
-                    player.GiveExp(enemy.GetLevel() * 10);
-                    Program.Enemies.RemoveAt(index);
-                    return;
-                }
+                var expToGive = enemy.GetLevel() * 10;
+                player.GiveExp(expToGive);
+                Program.Enemies.RemoveAt(index);
+                await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");
+                return;
             }
-            else
-            {
-                if (enemy.TakeDamage(player.Stats.GetStrength() - enemy.GetDefence()))
-                {
-                    player.GiveExp(enemy.GetLevel() * 10);
-                    Program.Enemies.RemoveAt(index);
-                    return;
-                }
-            }
-            
-            if (enemy.GetStrength() <= player.Stats.GetDefence())
-            {
-                player.TakeDamage(1);
-            }
-            else
-            {
-                player.TakeDamage(enemy.GetStrength() - player.Stats.GetDefence());
-            }
+
+            var damageToPlayer = enemy.GetStrength() <= player.Stats.GetDefence()
+                ? 1
+                : enemy.GetStrength() - player.Stats.GetDefence();
+            player.TakeDamage(damageToPlayer);
+            await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} left, don't give up!");
         }
         
         [Command("reset")]
