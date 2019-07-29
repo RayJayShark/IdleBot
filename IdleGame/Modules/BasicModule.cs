@@ -25,10 +25,6 @@ namespace IdleGame.Modules
             var emoji = new Emoji(e);
             await ReplyAsync("```" + emoji.Name + "```");
         }
-
-        public async Task Help()
-        {
-            
-        }
+        
     }
 }
