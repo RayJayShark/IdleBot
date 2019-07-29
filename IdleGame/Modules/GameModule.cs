@@ -199,6 +199,7 @@ namespace IdleGame.Modules
             }
 
             await ReplyAsync($"You ate a {itemName} and gained {hpToGive} HP!");
+            Program.UpdateDatabase();
         }
 
         [Command("listenemies")]
@@ -261,6 +262,7 @@ namespace IdleGame.Modules
                 player.GiveExp(expToGive);
                 Program.Enemies.RemoveAt(index);
                 await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");
+                Program.UpdateDatabase();
                 return;
             }
 
