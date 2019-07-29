@@ -1,4 +1,5 @@
 using System;
+using System.Reflection.Metadata.Ecma335;
 
 namespace IdleGame
 {
@@ -43,6 +44,11 @@ namespace IdleGame
         public uint GetDefence()
         {
             return _defence;
+        }
+
+        public uint GetHp()
+        {
+            return _hp;
         }
 
         public string GetStats()
