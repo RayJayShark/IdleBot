@@ -109,7 +109,7 @@ namespace IdleGame.Classes
                 {
                     Stats.AddDefaults();
                 }
-
+                _curHp = Stats.GetHealth();
                 LevelUp();
                 return true;    // Leveled Up!
             }
