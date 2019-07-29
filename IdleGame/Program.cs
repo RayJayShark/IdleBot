@@ -170,7 +170,7 @@ namespace IdleGame
             name = name.ToLower();
             foreach (var p in PlayerList)
             {
-                if (p.Value.Name.Equals(name))
+                if (p.Value.Name.ToLower().Equals(name))
                 {
                     return p.Value;
                 }
