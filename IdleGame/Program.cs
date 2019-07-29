@@ -43,7 +43,7 @@ namespace IdleGame
         private static string _newPlayerFaction;
         private static string _newPlayerClass;
         public static Dictionary<ulong, Player> PlayerList;
-        public static readonly Dictionary<uint, string> itemMap = new Dictionary<uint, string>();
+        public static readonly Dictionary<uint, ItemQuery> ItemMap = new Dictionary<uint, ItemQuery>();
         public static List<Enemy> Enemies = new List<Enemy>();
         private static Timer _enemyTimer;
 
@@ -71,7 +71,7 @@ namespace IdleGame
             var itemQuery = _conn.Query<ItemQuery>("SELECT * FROM item");
             foreach (var i in itemQuery)
             {
-                itemMap.Add(i.Id, i.Name);
+                ItemMap.Add(i.Id, i);
             }
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
@@ -167,6 +167,7 @@ namespace IdleGame
 
         public static Player FindPlayer(string name)
         {
+            name = name.ToLower();
             foreach (var p in PlayerList)
             {
                 if (p.Value.Name.Equals(name))
@@ -175,8 +176,20 @@ namespace IdleGame
                 }
             }
             return new BlankCharacter();
-            
         }
+
+        public static uint FindItemId(string itemName)
+        {
+            foreach (var i in ItemMap)
+            {
+                if (i.Value.Name.ToLower().Equals(itemName.ToLower()))
+                {
+                    return i.Key;
+                } 
+            }
+
+            return 0;
+        } 
 
         private static string GetTimeStamp()
         {
@@ -460,5 +473,6 @@ namespace IdleGame
     {
         public uint Id;
         public string Name;
+        public uint Value;
     }
 }
