@@ -20,7 +20,15 @@ namespace IdleGame
             {
                 _name += (char) rand.Next(97, 123);
             }
-            _level = (uint) rand.Next(1, 11);
+
+            uint highestLevel = 0;
+            foreach (var p in Program.PlayerList)
+            {
+                if (p.Value.Level > highestLevel)
+                    highestLevel = p.Value.Level;
+            }
+            
+            _level = (uint) rand.Next(1, (int) highestLevel + 1);
             _hp = (uint) rand.Next((int) _level * 2, (int) _level * 5);
             _strength = (uint) rand.Next((int) _level, (int) _level * 2);
             _defence = (uint) rand.Next((int) _level, (int) _level * 2);
