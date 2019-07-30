@@ -6,6 +6,7 @@ namespace IdleGame.Classes
 {
     public abstract class Player
     {
+        //TODO: Change to interface?
         public ulong Id;
         public string Name;
         public string Faction;
