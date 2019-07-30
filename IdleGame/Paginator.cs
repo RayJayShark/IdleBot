@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Discord;
@@ -25,7 +26,7 @@ namespace IdleGame
 
         public Paginator(EmbedBuilder embedBuilder)
         {
-            // Auto paginate
+            //TODO: Auto paginate
         }
 
         public void AddPage(EmbedBuilder embedBuilder)
@@ -48,6 +49,7 @@ namespace IdleGame
             }
 
             var message = context.Channel.SendMessageAsync("", false, _builtPages[0]).Result;
+            message.AddReactionAsync(new Emoji(_backward));
             message.AddReactionAsync(new Emoji(_forward));
             _currentPage = 1;
             _messageId = message.Id;
@@ -64,31 +66,35 @@ namespace IdleGame
             if (reaction.User.Value.IsBot)
                 return;
 
-            if (reaction.Emote.Name == _forward && _currentPage < _builtPages.Count)
+            if (reaction.Emote.Name == _forward)
             {
                 // Next page
-                await reaction.Message.Value.DeleteAsync();
-                var message = channel.SendMessageAsync("", false, _builtPages[_currentPage]).Result;
-                _currentPage++;
-                await message.AddReactionAsync(new Emoji(_backward));
                 if (_currentPage < _builtPages.Count)
                 {
-                    await message.AddReactionAsync(new Emoji(_forward));
+                    await reaction.Message.Value.ModifyAsync(m => m.Embed = _builtPages[_currentPage]);
+                    _currentPage++;
                 }
-                _messageId = message.Id;
+                else
+                {
+                    await reaction.Message.Value.ModifyAsync(m => m.Embed = _builtPages[0]);
+                    _currentPage = 1;
+                }
+                await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
-            else if (reaction.Emote.Name == _backward && _currentPage > 1)
+            else if (reaction.Emote.Name == _backward)
             {
                 // Last page
-                await reaction.Message.Value.DeleteAsync();
-                var message = channel.SendMessageAsync("", false, _builtPages[_currentPage - 2]).Result;
-                _currentPage--;
                 if (_currentPage > 1)
                 {
-                    await message.AddReactionAsync(new Emoji(_backward));
+                    await reaction.Message.Value.ModifyAsync(m => m.Embed = _builtPages[_currentPage - 2]);
+                    _currentPage--;
                 }
-                await message.AddReactionAsync(new Emoji(_forward));
-                _messageId = message.Id;
+                else
+                {
+                    await reaction.Message.Value.ModifyAsync(m => m.Embed = _builtPages.Last());
+                    _currentPage = _builtPages.Count;
+                }
+                await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
             else
             {
