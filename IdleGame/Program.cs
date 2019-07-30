@@ -28,6 +28,7 @@ namespace IdleGame
 {
     class Program
     {
+        //TODO: Add attack log to enemies
         private const string One = "1⃣";
         private const string Two = "2⃣";
         private const string Three = "3⃣";
