@@ -104,7 +104,7 @@ namespace IdleGame.Modules
                     break;
             }
 
-            embed.Title = player.Name;
+            embed.Title = $"{player.Name} - Level {player.Level}";
             embed.Description = player.Faction + "\n" + player.Class;
             embed.AddField("Stats:",
                 $"Health: {player.GetCurrentHp()}/{player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
@@ -206,6 +206,7 @@ namespace IdleGame.Modules
         [Alias("lsenemies", "listen", "lsen", "le")]
         public async Task ListEnemies()
         {
+            //TODO: Edit message instead of delete
             var embed = new EmbedBuilder();
             var page = new Paginator();
             page.Color = Color.DarkRed;
@@ -213,8 +214,8 @@ namespace IdleGame.Modules
             int i = 1;
             foreach (var e in Program.Enemies)
             {
-                embed.AddField(i + ". " +e.GetName(), e.GetStats());
-                if (i % 3 == 0)
+                embed.AddField($"{i}. {e.GetName()} - Lvl {e.GetLevel()}", e.GetStats());
+                if (i % 4 == 0)
                 {
                     page.AddPage(embed);
                     embed = new EmbedBuilder();

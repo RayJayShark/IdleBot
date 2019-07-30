@@ -22,13 +22,16 @@ namespace IdleGame
             }
 
             uint highestLevel = 0;
+            var lowestLevel = uint.MaxValue;
             foreach (var p in Program.PlayerList)
             {
                 if (p.Value.Level > highestLevel)
                     highestLevel = p.Value.Level;
+                if (p.Value.Level < lowestLevel)
+                    lowestLevel = p.Value.Level;
             }
-            
-            _level = (uint) rand.Next(1, (int) highestLevel + 1);
+
+            _level = (uint) rand.Next(Math.Clamp((int) lowestLevel - 5, 0, int.MaxValue), (int) highestLevel + 5);
             _hp = (uint) rand.Next((int) _level * 2, (int) _level * 5);
             _strength = (uint) rand.Next((int) _level, (int) _level * 2);
             _defence = (uint) rand.Next((int) _level, (int) _level * 2);
