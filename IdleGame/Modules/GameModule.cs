@@ -49,13 +49,8 @@ namespace IdleGame.Modules
                         $"You still have {(double.Parse(Environment.GetEnvironmentVariable("BOOST_HOURS")) - hour):N} hours until you can boost again.");
                     return;
                 }
-                
-                if (Program.PlayerList[userId].GiveExp(10))
-                {
-                    await Context.Guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
-                        .SendMessageAsync(
-                            $"{Context.User.Mention} has leveled up! They are now Level {Program.PlayerList[userId].Level}");
-                }
+
+                Program.PlayerList[userId].GiveExp(10);
 
                 Program.PlayerList[userId].ResetBoost();
                 Program.UpdateDatabase();
@@ -206,7 +201,6 @@ namespace IdleGame.Modules
         [Alias("lsenemies", "listen", "lsen", "le")]
         public async Task ListEnemies()
         {
-            //TODO: Edit message instead of delete
             var embed = new EmbedBuilder();
             var page = new Paginator();
             page.Color = Color.DarkRed;

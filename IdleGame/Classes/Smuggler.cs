@@ -81,13 +81,13 @@ namespace IdleGame.Classes
             return _exp;
         }
         
-        public override bool GiveExp(uint exp)
+        public override void GiveExp(uint exp)
         {
             _exp += exp;
-            return LevelUp();
+            LevelUp();
         }
         
-        public override bool LevelUp()
+        public override void LevelUp()
         {
             if (_exp >= 10 * Level)
             {
@@ -110,11 +110,15 @@ namespace IdleGame.Classes
                     Stats.AddDefaults();
                 }
                 _curHp = Stats.GetHealth();
-                LevelUp();
-                return true;    // Leveled Up!
-            }
+                if (_exp >= 10 * Level)
+                {
+                    LevelUp();
+                    return;
+                }
 
-            return false;       // Not enough Exp to level
+                Program.Guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                    .SendMessageAsync($"{Program.Guild.GetUser(Id).Mention} has leveled up! They are now Level {Level}");
+            }
         }
     }
 }

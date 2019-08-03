@@ -24,9 +24,9 @@ namespace IdleGame.Classes
 
         public abstract uint GetExp();
         
-        public abstract bool GiveExp(uint exp);
+        public abstract void GiveExp(uint exp);
         
-        public abstract bool LevelUp();
+        public abstract void LevelUp();
 
         public Timestamp GetBoost()
         {

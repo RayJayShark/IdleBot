@@ -47,6 +47,7 @@ namespace IdleGame
         public static readonly Dictionary<uint, ItemQuery> ItemMap = new Dictionary<uint, ItemQuery>();
         public static List<Enemy> Enemies = new List<Enemy>();
         private static Timer _enemyTimer;
+        public static SocketGuild Guild;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -89,6 +90,8 @@ namespace IdleGame
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .BuildServiceProvider();
+
+            Guild = _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
             
             _commands = new CommandService();
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
@@ -450,12 +453,7 @@ namespace IdleGame
                 var user = guild.GetUser(p.Value.Id);
                 if (user.VoiceState.HasValue && user.VoiceChannel.Id != guild.AFKChannel.Id)
                 {
-                    if (PlayerList[p.Key].GiveExp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_EXP"))))
-                    {
-                        guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
-                            .SendMessageAsync(
-                                $"{_client.GetUser(p.Key).Mention} has leveled up! They are now Level {PlayerList[p.Key].Level}");
-                    }
+                    PlayerList[p.Key].GiveExp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_EXP")));
                 }
                 PlayerList[p.Key].GiveHp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_HP")));
             }

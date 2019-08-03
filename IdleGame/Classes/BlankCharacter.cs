@@ -7,10 +7,7 @@ namespace IdleGame.Classes
             Id = 0;
         }
 
-        public override bool LevelUp()
-        {
-            return false;
-        }
+        public override void LevelUp() {}
 
         public override uint GetCurrentHp()
         {
@@ -32,7 +29,7 @@ namespace IdleGame.Classes
             throw new System.NotImplementedException();
         }
 
-        public override bool GiveExp(uint exp)
+        public override void GiveExp(uint exp)
         {
             throw new System.NotImplementedException();
         }
