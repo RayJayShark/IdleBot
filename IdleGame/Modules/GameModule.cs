@@ -15,6 +15,8 @@ namespace IdleGame.Modules
         protected ulong UserId;
         protected ulong DeleteId;
         private ulong _resetId;
+        private IUserMessage _attackMessage;
+        private int _attackIndex;
 
         [Command("intro")]
         public async Task Intro()
@@ -265,7 +267,66 @@ namespace IdleGame.Modules
                 ? 1
                 : enemy.GetStrength() - player.Stats.GetDefence();
             player.TakeDamage(damageToPlayer);
-            await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} HP left, don't give up!");
+            var message = await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} HP left, attack again?");
+            await message.AddReactionAsync(new Emoji(Y));
+            await message.AddReactionAsync(new Emoji(N));
+            UserId = Context.User.Id;
+            _attackMessage = message;
+            _attackIndex = index;
+            Context.Client.ReactionAdded += AttackAgain;
+        }
+
+        private async Task AttackAgain(Cacheable<IUserMessage, ulong> cache, ISocketMessageChannel channel,
+            SocketReaction reaction)
+        {
+            if (reaction.MessageId != _attackMessage.Id || reaction.User.Value.IsBot)
+                return;
+
+            if (reaction.UserId != UserId || (!reaction.Emote.Name.Equals(Y) && !reaction.Emote.Name.Equals(N)))
+            {
+                await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+            }
+
+            if (reaction.Emote.Name.Equals(N))
+            {
+                await reaction.Message.Value.DeleteAsync();
+                UserId = 0;
+                _attackIndex = 0;
+                Context.Client.ReactionAdded -= AttackAgain;
+            }
+            else
+            {
+                var player = Program.PlayerList[UserId];
+                if (player.GetCurrentHp() == 0)
+                {
+                    await ReplyAsync("You have no health! Try eating a taco or waiting a bit.");
+                    Context.Client.ReactionAdded -= AttackAgain;
+                    return;
+                }
+                var enemy = Program.Enemies[_attackIndex];
+
+                var damageToEnemy = player.Stats.GetStrength() <= enemy.GetDefence() 
+                    ? 1 
+                    : player.Stats.GetStrength() - enemy.GetDefence();
+                if (enemy.TakeDamage(damageToEnemy))
+                {
+                    var expToGive = enemy.GetLevel() * 10;
+                    player.GiveExp(expToGive);
+                    Program.Enemies.RemoveAt(_attackIndex);
+                    await reaction.Message.Value.RemoveAllReactionsAsync();
+                    await reaction.Message.Value.ModifyAsync(m => m.Content = $"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");
+                    Program.UpdateDatabase();
+                    Context.Client.ReactionAdded -= AttackAgain;
+                    return;
+                }
+                
+                var damageToPlayer = enemy.GetStrength() <= player.Stats.GetDefence()
+                    ? 1
+                    : enemy.GetStrength() - player.Stats.GetDefence();
+                player.TakeDamage(damageToPlayer);
+                await reaction.Message.Value.ModifyAsync(m => m.Content = $"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} HP left, attack again?");
+                await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+            }
         }
         
         [Command("reset")]

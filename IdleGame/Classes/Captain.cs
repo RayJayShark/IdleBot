@@ -1,4 +1,5 @@
 using System;
+using Discord.Rest;
 using Google.Protobuf.WellKnownTypes;
 
 namespace IdleGame.Classes
@@ -116,8 +117,9 @@ namespace IdleGame.Classes
                     return;
                 }
 
-                Program.Guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
-                    .SendMessageAsync($"{Program.Guild.GetUser(Id).Mention} has leveled up! They are now Level {Level}");
+                var guild = Program.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
+                guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                    .SendMessageAsync($"{guild.GetUser(Id).Mention} has leveled up! They are now Level {Level}");
             }
         }
     }

@@ -47,7 +47,6 @@ namespace IdleGame
         public static readonly Dictionary<uint, ItemQuery> ItemMap = new Dictionary<uint, ItemQuery>();
         public static List<Enemy> Enemies = new List<Enemy>();
         private static Timer _enemyTimer;
-        public static SocketGuild Guild;
 
         static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
@@ -91,8 +90,6 @@ namespace IdleGame
                 .AddSingleton(_client)
                 .BuildServiceProvider();
 
-            Guild = _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
-            
             _commands = new CommandService();
             await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
             _client.MessageUpdated += MessageUpdated;
@@ -110,7 +107,7 @@ namespace IdleGame
             _enemyTimer.Elapsed += RefreshEnemies;
             _enemyTimer.Interval = 60 * 60 * 1000;
             _enemyTimer.Enabled = true;
-
+            
             await Task.Delay(-1);
         }
         
@@ -162,6 +159,11 @@ namespace IdleGame
             Enemies.AddRange(Enemy.CreateMultiple(10));
         }
 
+        public static SocketGuild GetGuild(ulong id)
+        {
+            return _client.GetGuild(id);
+        }
+        
         public static async Task Shutdown()
         {
             await _client.StopAsync();
