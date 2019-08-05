@@ -65,7 +65,7 @@ namespace IdleGame.Modules
         }
         
         [Command("info")]
-        [Alias("stats", "stat")]
+        [Alias("stats", "stat", "level", "lvl")]
         [Remarks("[player]")]
         public async Task GetPlayerInfo([Remainder] string name = "")
         {
@@ -101,38 +101,12 @@ namespace IdleGame.Modules
                     break;
             }
 
-            embed.Title = $"{player.Name} - Level {player.Level}";
-            embed.Description = player.Faction + "\n" + player.Class;
+            embed.Title = $"{player.Name} - {player.Faction} {player.Class}";
+            embed.Description = $"Level {player.Level}\nExp: {player.GetExp()}/{player.Level * 10}";
             embed.AddField("Stats:",
                 $"Health: {player.GetCurrentHp()}/{player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
 
             await ReplyAsync("", false, embed.Build());
-        }
-        
-        [Command("level")]
-        [Remarks("[player]")]
-        public async Task CheckLevel([Remainder] string name = "")
-        {
-            Player player;
-            if (name.Equals(""))
-            {
-                if (!CharacterCreated(Context.User.Id))
-                    return;
-                player = Program.PlayerList[Context.User.Id];
-                await ReplyAsync($"You are currently Level {player.Level} with {player.GetExp()} XP ({(player.Level * 10) - player.GetExp()} to the next level)");
-            }
-            else
-            {
-                player = Program.FindPlayer(name);
-                if (player.Id == 0)
-                {
-                    await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
-                }
-                else
-                {
-                    await ReplyAsync($"{player.Name} is currently Level {player.Level} with {player.GetExp()} XP ({(player.Level * 10) - player.GetExp()} to the next level)");
-                }
-            }
         }
 
         [Command("inventory")]
@@ -226,7 +200,8 @@ namespace IdleGame.Modules
 
             page.SendMessage(Context);
         }
-
+        
+        //TODO: Put battle information in pretty embed (pokemon style)
         [Command("attack")]
         [Remarks("<enemyId>")]
         public async Task AttackEnemy(uint enemyId)
@@ -481,7 +456,6 @@ namespace IdleGame.Modules
             [Command("exp")]
             [Alias("xp")]
             [Remarks("<amount> [player]")]
-            //TODO: Use levelup command instead
             public async Task GiveExp(uint amount, [Remainder] string playerName = "")
             {
                 var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
