@@ -209,10 +209,10 @@ namespace IdleGame
         {
             try
             {
-                Console.WriteLine("Testing MySQL...");
+                Console.WriteLine($"{GetTimeStamp()} Database    Testing MySQL...");
                 _conn.Open();
                 _conn.Close();
-                Console.WriteLine("Test Complete!");
+                Console.WriteLine($"{GetTimeStamp()} Database    Test Complete!");
             }
             catch (Exception ex)
             {
@@ -430,7 +430,7 @@ namespace IdleGame
             }
             
             _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
-            Console.WriteLine($"{GetTimeStamp()} Game\t     Database updated");
+            Console.WriteLine($"{GetTimeStamp()} Database    Database updated");
         }
 
         private static void CleanInventories()        // Clear inventory items with zeros
