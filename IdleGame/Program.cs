@@ -33,8 +33,8 @@ namespace IdleGame
         private const string Two = "2⃣";
         private const string Three = "3⃣";
         private static DiscordSocketClient _client;
-        private CommandService _commands;
-        private IServiceProvider _services;
+        private static CommandService _commands;
+        private static IServiceProvider _services;
         private static MySqlConnection _conn;
         private string _connStr;
         private static RestUserMessage _message;
@@ -77,7 +77,7 @@ namespace IdleGame
 
             _client = new DiscordSocketClient(new DiscordSocketConfig
             {
-                LogLevel = LogSeverity.Info,
+                LogLevel = LogSeverity.Verbose,
                 MessageCacheSize = 100
             });
 
@@ -107,11 +107,11 @@ namespace IdleGame
             _enemyTimer.Elapsed += RefreshEnemies;
             _enemyTimer.Interval = 60 * 60 * 1000;
             _enemyTimer.Enabled = true;
-            
+
             await Task.Delay(-1);
         }
         
-        private Task Log(LogMessage msg)
+        private static Task Log(LogMessage msg)
         {
             Console.WriteLine(msg.ToString());
             return Task.CompletedTask;
@@ -142,13 +142,13 @@ namespace IdleGame
             await _commands.ExecuteAsync(context: context, argPos: argPos, services: _services);
         }
 
-        private async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after,
+        private static async Task MessageUpdated(Cacheable<IMessage, ulong> before, SocketMessage after,
             ISocketMessageChannel channel)
         {
             var message = await before.GetOrDownloadAsync();
         }
 
-        private async Task HandleDisconnect(Exception ex)
+        private static async Task HandleDisconnect(Exception ex)
         {
             await TestMySqlConnection();
         }
@@ -176,7 +176,7 @@ namespace IdleGame
             name = name.ToLower();
             foreach (var p in PlayerList)
             {
-                if (p.Value.Name.ToLower().Equals(name))
+                if (p.Value.GetName().ToLower().Equals(name))
                 {
                     return p.Value;
                 }
@@ -203,9 +203,7 @@ namespace IdleGame
         }
 
         // SQL functions
-#pragma warning disable 1998
         private static async Task TestMySqlConnection()
-#pragma warning restore 1998
         {
             try
             {
@@ -353,9 +351,9 @@ namespace IdleGame
             var cPlayers = _conn.Query<Captain>("SELECT * FROM player WHERE Class = 'Captain'");
             foreach (var p in cPlayers)
             {
-                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
+                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.GetId()}");
                 p.Stats = stats;
-                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
+                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.GetId()}");
                 if (inv.Count() != 0)
                 {
                     foreach (var i in inv)
@@ -367,16 +365,16 @@ namespace IdleGame
                     }
                 }
 
-                tempPlayerList.Add(p.Id, p);
+                tempPlayerList.Add(p.GetId(), p);
             }
             
             // Query Marksmen
             var mPlayers = _conn.Query<Marksman>("SELECT * FROM player WHERE Class = 'Marksman'");
             foreach (var p in mPlayers)
             {
-                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
+                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.GetId()}");
                 p.Stats = stats;
-                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
+                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.GetId()}");
                 if (inv.Count() != 0)
                 {
                     foreach (var i in inv)
@@ -388,16 +386,16 @@ namespace IdleGame
                     }
                 }
 
-                tempPlayerList.Add(p.Id, p);
+                tempPlayerList.Add(p.GetId(), p);
             }
             
             // Query Smuggler
             var sPlayers = _conn.Query<Smuggler>("SELECT * FROM player WHERE Class = 'Smuggler'");
             foreach (var p in sPlayers)
             {
-                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.Id}");
+                var stats = _conn.QuerySingle<PlayerStats>($"SELECT Health, Strength, Defence FROM stats WHERE PlayerId = {p.GetId()}");
                 p.Stats = stats;
-                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.Id}");
+                var inv = _conn.Query<InventoryQuery>($"SELECT ItemId, Quantity FROM inventory WHERE PlayerId = {p.GetId()}");
                 if (inv.Count() != 0)
                 {
                     foreach (var i in inv)
@@ -409,7 +407,7 @@ namespace IdleGame
                     }
                 }
 
-                tempPlayerList.Add(p.Id, p);
+                tempPlayerList.Add(p.GetId(), p);
             }
             
             return tempPlayerList;
@@ -420,8 +418,8 @@ namespace IdleGame
             CleanInventories();
             foreach (var p in PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.Money}, Level = {p.Value.Level}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
-                _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.Id}");
+                _conn.Execute($"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.GetMoney()}, Level = {p.Value.GetLevel()}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.GetId()}");
                 
                 foreach (var i in p.Value.Inventory)
                 {
@@ -452,7 +450,7 @@ namespace IdleGame
             foreach (var p in PlayerList)
             {
                 var guild = _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
-                var user = guild.GetUser(p.Value.Id);
+                var user = guild.GetUser(p.Value.GetId());
                 if (user.VoiceState.HasValue && user.VoiceChannel.Id != guild.AFKChannel.Id)
                 {
                     PlayerList[p.Key].GiveExp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_EXP")));

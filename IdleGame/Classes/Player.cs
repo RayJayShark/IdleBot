@@ -6,49 +6,121 @@ namespace IdleGame.Classes
 {
     public abstract class Player
     {
-        //TODO: Change to interface?
-        public ulong Id;
-        public string Name;
-        public string Faction;
-        public string Class;
-        public uint Money;
-        public uint Level;
-        private Timestamp _boost = DateTime.UnixEpoch.ToTimestamp();
+        //TODO: Use DateTimeOffset for boost???
+        protected ulong Id;
+        protected string Name;
+        protected string Faction;
+        protected string Class;
+        protected uint Money;
+        protected uint Level;
+        protected uint CurHp;
+        protected uint Exp;
+        protected Timestamp Boost = DateTime.UnixEpoch.ToTimestamp();
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
 
-        protected Player()
+        public ulong GetId()
         {
-            
+            return Id;
         }
 
-        public abstract uint GetExp();
-        
-        public abstract void GiveExp(uint exp);
-        
-        public abstract void LevelUp();
+        public string GetName()
+        {
+            return Name;
+        }
 
+        public string GetFaction()
+        {
+            return Faction;
+        }
+
+        public string GetClass()
+        {
+            return Class;
+        }
+
+        public uint GetMoney()
+        {
+            return Money;
+        }
+
+        public uint GetLevel()
+        {
+            return Level;
+        }
+        
         public Timestamp GetBoost()
         {
-            return _boost;
+            return Boost;
         }
         
         public double HoursSinceLastBoost()
         {
-            return double.Parse(((DateTime.UtcNow.ToTimestamp().Seconds -_boost.Seconds) / 60.0 / 60).ToString());
+            return double.Parse(((DateTime.UtcNow.ToTimestamp().Seconds - Boost.Seconds) / 60.0 / 60).ToString());
         }
 
         public void ResetBoost()
         {
-            _boost = DateTime.UtcNow.ToTimestamp();
+            Boost = DateTime.UtcNow.ToTimestamp();
+        }
+        
+        public uint GetExp()
+        {
+            return Exp;
         }
 
-        public abstract uint GetCurrentHp();
+        public void GiveExp(uint exp)
+        {
+            Exp += exp;
+            LevelUp();
+        }
 
-        public abstract void GiveHp(uint health);
+        public uint GetCurrentHp()
+        {
+            return CurHp;
+        }
 
-        public abstract bool TakeDamage(uint damage);
+        public void GiveHp(uint health)
+        {
+            CurHp += health;
 
+            if (CurHp > Stats.GetHealth())
+            {
+                CurHp = Stats.GetHealth();
+            }
+        }
+
+        public bool TakeDamage(uint damage)
+        {
+            if (damage >= CurHp)
+            {
+                CurHp = 0;
+                return true;      // dead
+            }
+
+            CurHp -= damage;
+            return false;
+        }
+        
+        protected virtual void LevelUp()
+        {
+            if (Exp >= 10 * Level)
+            {
+                Exp -= 10 * Level;
+                Level++;
+                Stats.AddDefaults();
+                CurHp = Stats.GetHealth();
+                if (Exp >= 10 * Level)
+                {
+                    LevelUp();
+                    return;
+                }
+
+                var guild = Program.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
+                guild.GetTextChannel(ulong.Parse(Environment.GetEnvironmentVariable("CHANNEL_ID")))
+                    .SendMessageAsync($"{guild.GetUser(Id).Mention} has leveled up! They are now Level {Level}");
+            }
+        }
     }
 
     public class PlayerStats

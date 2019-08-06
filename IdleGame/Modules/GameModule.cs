@@ -79,7 +79,7 @@ namespace IdleGame.Modules
             else
             {
                 player = Program.FindPlayer(name);
-                if (player.Id == 0)
+                if (player.GetId() == 0)
                 {
                     await ReplyAsync($"{name} doesn't have a character. Tell 'em to create one!");
                     return;
@@ -88,7 +88,7 @@ namespace IdleGame.Modules
             
             var embed = new EmbedBuilder();
             
-            switch (player.Class)
+            switch (player.GetClass())
             {
                 case "Captain":
                     embed.Color = Color.Gold;
@@ -101,8 +101,8 @@ namespace IdleGame.Modules
                     break;
             }
 
-            embed.Title = $"{player.Name} - {player.Faction} {player.Class}";
-            embed.Description = $"Level {player.Level}\nExp: {player.GetExp()}/{player.Level * 10}";
+            embed.Title = $"{player.GetName()} - {player.GetFaction()} {player.GetClass()}";
+            embed.Description = $"Level {player.GetLevel()}\nExp: {player.GetExp()}/{player.GetLevel() * 10}";
             embed.AddField("Stats:",
                 $"Health: {player.GetCurrentHp()}/{player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
 
@@ -119,7 +119,7 @@ namespace IdleGame.Modules
             try
             {
                 var player = Program.PlayerList[Context.User.Id];
-                var embed = new EmbedBuilder {Title = player.Name + "'s inventory"};
+                var embed = new EmbedBuilder {Title = player.GetName() + "'s inventory"};
                 foreach (var i in player.Inventory)
                 {
                     embed.Description +=  Program.ItemMap[i.Key].Name + " " + i.Value + "\n";
@@ -330,16 +330,16 @@ namespace IdleGame.Modules
                     if (reaction.Emote.Name == Y)
                     {
                         var player = Program.PlayerList[UserId];
-                        switch (player.Class)
+                        switch (player.GetClass())
                         {
                             case "Captain":
-                                Program.PlayerList[UserId] = new Captain(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                Program.PlayerList[UserId] = new Captain(player.GetId(), player.GetName(), player.GetFaction()) {Inventory = player.Inventory};
                                 break;
                             case "Marksman":
-                                Program.PlayerList[UserId] = new Marksman(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                Program.PlayerList[UserId] = new Marksman(player.GetId(), player.GetName(), player.GetFaction()) {Inventory = player.Inventory};
                                 break;
                             case "Smuggler":
-                                Program.PlayerList[UserId] = new Smuggler(player.Id, player.Name, player.Faction) {Inventory = player.Inventory};
+                                Program.PlayerList[UserId] = new Smuggler(player.GetId(), player.GetName(), player.GetFaction()) {Inventory = player.Inventory};
                                 break;
                         }
                         await reaction.Message.Value.DeleteAsync();
@@ -432,7 +432,7 @@ namespace IdleGame.Modules
             [Remarks("<itemId> <amount> [player]")]
             public async Task GiveItem(uint itemId, uint amount, [Remainder] string playerName = "")
             {
-                ulong playerId = playerName== string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
+                ulong playerId = playerName== string.Empty ? Context.User.Id : Program.FindPlayer(playerName).GetId();
 
                 if (!Program.PlayerList.ContainsKey(playerId))
                 {
@@ -450,7 +450,7 @@ namespace IdleGame.Modules
                 }
 
                 await ReplyAsync(
-                    $"{Program.PlayerList[playerId].Name} now has {Program.PlayerList[playerId].Inventory[itemId]} {Program.ItemMap[itemId]}");
+                    $"{Program.PlayerList[playerId].GetName()} now has {Program.PlayerList[playerId].Inventory[itemId]} {Program.ItemMap[itemId]}");
             }
 
             [Command("exp")]
@@ -458,7 +458,7 @@ namespace IdleGame.Modules
             [Remarks("<amount> [player]")]
             public async Task GiveExp(uint amount, [Remainder] string playerName = "")
             {
-                var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
+                var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).GetId();
                 
                 if (!Program.PlayerList.ContainsKey(playerId))
                 {
@@ -468,25 +468,7 @@ namespace IdleGame.Modules
                 
                 Program.PlayerList[playerId].GiveExp(amount);
                 await ReplyAsync(
-                    $"{Program.PlayerList[playerId].Name} is now {Program.PlayerList[playerId].Level} with {Program.PlayerList[playerId].GetExp()} xp");
-            }
-
-            [Command("level")]
-            [Alias("lvl")]
-            [Remarks("<amount> [player]")]
-            public async Task GiveLevel(uint amount, [Remainder] string playerName = "")
-            {
-                var playerId = playerName == string.Empty ? Context.User.Id : Program.FindPlayer(playerName).Id;
-                
-                if (!Program.PlayerList.ContainsKey(playerId))
-                {
-                    await ReplyAsync("Character doesn't exist.");
-                    return;
-                }
-                
-                Program.PlayerList[playerId].Level += amount;
-                await ReplyAsync(
-                    $"{Program.PlayerList[playerId].Name} is now Level {Program.PlayerList[playerId].Level}");
+                    $"{Program.PlayerList[playerId].GetName()} is now {Program.PlayerList[playerId].GetLevel()} with {Program.PlayerList[playerId].GetExp()} xp");
             }
         }
 
@@ -495,7 +477,7 @@ namespace IdleGame.Modules
         public async Task DeleteCharacter([Remainder] string playerName)
         {
             var player = Program.FindPlayer(playerName);
-            if (player.Id == 0)
+            if (player.GetId() == 0)
             {
                 await ReplyAsync("They no have character");
                 return;
@@ -503,7 +485,7 @@ namespace IdleGame.Modules
             
             var message = await ReplyAsync(
                 $"{Context.User.Mention} this will delete {playerName}'s character, including all progress and inventory. \nThere is no going back! Are you sure?");
-            UserId = player.Id;
+            UserId = player.GetId();
             await message.AddReactionAsync(new Emoji(Y));
             await message.AddReactionAsync(new Emoji(N));
             DeleteId = message.Id;

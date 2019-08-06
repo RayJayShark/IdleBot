@@ -25,10 +25,10 @@ namespace IdleGame
             var lowestLevel = uint.MaxValue;
             foreach (var p in Program.PlayerList)
             {
-                if (p.Value.Level > highestLevel)
-                    highestLevel = p.Value.Level;
-                if (p.Value.Level < lowestLevel)
-                    lowestLevel = p.Value.Level;
+                if (p.Value.GetLevel() > highestLevel)
+                    highestLevel = p.Value.GetLevel();
+                if (p.Value.GetLevel() < lowestLevel)
+                    lowestLevel = p.Value.GetLevel();
             }
 
             _level = (uint) rand.Next(Math.Clamp((int) lowestLevel - 5, 0, int.MaxValue), (int) highestLevel + 5);
