@@ -228,10 +228,10 @@ namespace IdleGame.Modules
             var damageToEnemy = player.Stats.GetStrength() <= enemy.GetDefence() 
                 ? 1 
                 : player.Stats.GetStrength() - enemy.GetDefence();
-            if (enemy.TakeDamage(damageToEnemy))
+            if (enemy.TakeDamage(player.GetId(), damageToEnemy))
             {
                 var expToGive = enemy.GetLevel() * 10;
-                player.GiveExp(expToGive);
+                enemy.DistributeExp();
                 Program.Enemies.RemoveAt(index);
                 await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");
                 Program.UpdateDatabase();
@@ -283,10 +283,10 @@ namespace IdleGame.Modules
                 var damageToEnemy = player.Stats.GetStrength() <= enemy.GetDefence() 
                     ? 1 
                     : player.Stats.GetStrength() - enemy.GetDefence();
-                if (enemy.TakeDamage(damageToEnemy))
+                if (enemy.TakeDamage(player.GetId(), damageToEnemy))
                 {
                     var expToGive = enemy.GetLevel() * 10;
-                    player.GiveExp(expToGive);
+                    enemy.DistributeExp();
                     Program.Enemies.RemoveAt(_attackIndex);
                     await reaction.Message.Value.RemoveAllReactionsAsync();
                     await reaction.Message.Value.ModifyAsync(m => m.Content = $"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");

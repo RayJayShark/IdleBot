@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection.Metadata.Ecma335;
 
 namespace IdleGame
@@ -8,8 +9,10 @@ namespace IdleGame
         private readonly string _name;
         private readonly uint _level;
         private uint _hp;
+        private readonly uint _maxHp;
         private readonly uint _strength;
         private readonly uint _defence;
+        private Dictionary<ulong, uint> AttackLog = new Dictionary<ulong,uint>(); // <UserId, DamageDealt>
 
         private Enemy()
         {
@@ -33,6 +36,7 @@ namespace IdleGame
 
             _level = (uint) rand.Next(Math.Clamp((int) lowestLevel - 5, 0, int.MaxValue), (int) highestLevel + 5);
             _hp = (uint) rand.Next((int) _level * 2, (int) _level * 5);
+            _maxHp = _hp;
             _strength = (uint) rand.Next((int) _level, (int) _level * 2);
             _defence = (uint) rand.Next((int) _level, (int) _level * 2);
         }
@@ -67,15 +71,40 @@ namespace IdleGame
             return $"Health: {_hp}\nStrength: {_strength}\nDefence: {_defence}";
         }
 
-        public bool TakeDamage(uint damage)
+        public bool TakeDamage(ulong userId, uint damage)
         {
             if (damage >= _hp)
             {
+                if (AttackLog.ContainsKey(userId))
+                {
+                    AttackLog[userId] += _hp;
+                }
+                else
+                {
+                    AttackLog.Add(userId, _hp);
+                }
                 return true;    //Killed
             }
 
             _hp -= damage;
+            if (AttackLog.ContainsKey(userId))
+            {
+                AttackLog[userId] += damage;
+            }
+            else
+            {
+                AttackLog.Add(userId, damage);
+            }
             return false;
+        }
+
+        public void DistributeExp()
+        {
+            foreach (var (id, damage) in AttackLog)
+            {
+                var expToGive = (uint) (damage / (double) _maxHp) * (_level * 10);
+                Program.PlayerList[id].GiveExp(expToGive);
+            }
         }
 
         public static Enemy[] CreateMultiple(int amount)
