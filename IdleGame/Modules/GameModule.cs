@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -12,6 +13,8 @@ namespace IdleGame.Modules
     {
         protected const string Y = "\uD83C\uDDFE";
         protected const string N = "\uD83C\uDDF3";
+        protected const string CHECK = "✅";
+        protected const string X = "❎";
         protected ulong UserId;
         protected ulong DeleteId;
         private ulong _resetId;
@@ -201,7 +204,6 @@ namespace IdleGame.Modules
             page.SendMessage(Context);
         }
         
-        //TODO: Put battle information in pretty embed (pokemon style)
         [Command("attack")]
         [Remarks("<enemyId>")]
         public async Task AttackEnemy(uint enemyId)
@@ -225,26 +227,19 @@ namespace IdleGame.Modules
             }
             var enemy = Program.Enemies[index];
 
-            var damageToEnemy = player.Stats.GetStrength() <= enemy.GetDefence() 
-                ? 1 
-                : player.Stats.GetStrength() - enemy.GetDefence();
-            if (enemy.TakeDamage(player.GetId(), damageToEnemy))
-            {
-                var expToGive = enemy.GetLevel() * 10;
-                enemy.DistributeExp();
-                Program.Enemies.RemoveAt(index);
-                await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");
-                Program.UpdateDatabase();
-                return;
-            }
 
-            var damageToPlayer = enemy.GetStrength() <= player.Stats.GetDefence()
-                ? 1
-                : enemy.GetStrength() - player.Stats.GetDefence();
-            player.TakeDamage(damageToPlayer);
-            var message = await ReplyAsync($"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} HP left, attack again?");
-            await message.AddReactionAsync(new Emoji(Y));
-            await message.AddReactionAsync(new Emoji(N));
+            var embed = new EmbedBuilder
+            {
+                Title = $"{player.GetName()} vs {enemy.GetName()}",
+                Description = $"**{enemy.GetName()}** - HP:{enemy.GetHp()}/{enemy.GetMaxHp()} - {HealthBar(enemy.GetHp(), enemy.GetMaxHp())}\n" +
+                              $"STR {enemy.GetStrength()}\nDEF {enemy.GetDefence()}\n\nSTR {player.Stats.GetStrength()}\nDEF {player.Stats.GetDefence()}\n" +
+                              $"**{player.GetName()}** - HP:{player.GetCurrentHp()}/{player.Stats.GetHealth()} - {HealthBar(player.GetCurrentHp(), player.Stats.GetHealth())}",
+                Color = Color.DarkRed
+            };
+            var message = await ReplyAsync("", false, embed.Build());
+
+            await message.AddReactionAsync(new Emoji(CHECK));
+            await message.AddReactionAsync(new Emoji(X));
             UserId = Context.User.Id;
             _attackMessage = message;
             _attackIndex = index;
@@ -257,12 +252,12 @@ namespace IdleGame.Modules
             if (reaction.MessageId != _attackMessage.Id || reaction.User.Value.IsBot)
                 return;
 
-            if (reaction.UserId != UserId || (!reaction.Emote.Name.Equals(Y) && !reaction.Emote.Name.Equals(N)))
+            if (reaction.UserId != UserId || (!reaction.Emote.Name.Equals(CHECK) && !reaction.Emote.Name.Equals(X)))
             {
                 await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
 
-            if (reaction.Emote.Name.Equals(N))
+            if (reaction.Emote.Name.Equals(X))
             {
                 await reaction.Message.Value.DeleteAsync();
                 UserId = 0;
@@ -274,6 +269,7 @@ namespace IdleGame.Modules
                 var player = Program.PlayerList[UserId];
                 if (player.GetCurrentHp() == 0)
                 {
+                    await reaction.Message.Value.DeleteAsync();
                     await ReplyAsync("You have no health! Try eating a taco or waiting a bit.");
                     Context.Client.ReactionAdded -= AttackAgain;
                     return;
@@ -285,11 +281,22 @@ namespace IdleGame.Modules
                     : player.Stats.GetStrength() - enemy.GetDefence();
                 if (enemy.TakeDamage(player.GetId(), damageToEnemy))
                 {
-                    var expToGive = enemy.GetLevel() * 10;
                     enemy.DistributeExp();
+                    await reaction.Message.Value.DeleteAsync();
+                    var endingEmbed = new EmbedBuilder();
+                    endingEmbed.Title = $"{player.GetName()} killed {enemy.GetName()}!";
+                    var expDist = "";
+                    foreach (var (id, damage) in enemy.GetAttackLog())
+                    {
+                        if (!Program.PlayerList.ContainsKey(id))
+                            continue;
+                        expDist +=
+                            $"**{Program.PlayerList[id].GetName()}**: {damage} Damage dealt, {(uint) (((double) damage / enemy.GetMaxHp()) * (enemy.GetLevel() * 10))} Exp gained\n";
+                    }
+
+                    endingEmbed.AddField("Exp Distribution:", expDist);
+                    await ReplyAsync("", false, endingEmbed.Build());
                     Program.Enemies.RemoveAt(_attackIndex);
-                    await reaction.Message.Value.RemoveAllReactionsAsync();
-                    await reaction.Message.Value.ModifyAsync(m => m.Content = $"You hit {enemy.GetName()} for {damageToEnemy} and killed it! Enjoy your {expToGive} XP!");
                     Program.UpdateDatabase();
                     Context.Client.ReactionAdded -= AttackAgain;
                     return;
@@ -299,11 +306,26 @@ namespace IdleGame.Modules
                     ? 1
                     : enemy.GetStrength() - player.Stats.GetDefence();
                 player.TakeDamage(damageToPlayer);
-                await reaction.Message.Value.ModifyAsync(m => m.Content = $"You hit {enemy.GetName()} for {damageToEnemy}. They hit back for {damageToPlayer}. {enemy.GetName()} still has {enemy.GetHp()} HP left, attack again?");
+                var embed = new EmbedBuilder
+                {
+                    Title = $"{player.GetName()} vs {enemy.GetName()}",
+                    Description = $"**{enemy.GetName()}** - HP:{enemy.GetHp()}/{enemy.GetMaxHp()} {HealthBar(enemy.GetHp(), enemy.GetMaxHp())}\n" +
+                                  $"STR {enemy.GetStrength()}\nDEF {enemy.GetDefence()}\n\nSTR {player.Stats.GetStrength()}\nDEF {player.Stats.GetDefence()}\n" +
+                                  $"**{player.GetName()}** - HP:{player.GetCurrentHp()}/{player.Stats.GetHealth()} {HealthBar(player.GetCurrentHp(), player.Stats.GetHealth())}",
+                    Color = Color.DarkRed
+                };
+                await reaction.Message.Value.ModifyAsync(m => m.Embed = embed.Build());
                 await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
         }
-        
+
+        private static string HealthBar(uint curHp, uint maxHp)
+        {
+            var percent = (int) Math.Round(((double) curHp / maxHp) * 10, MidpointRounding.AwayFromZero);
+            var bar = "[" + new string('❤', percent) + new string('❌', 10 - percent) + "]";
+            return bar;
+        }
+
         [Command("reset")]
         public async Task ResetPlayer()
         {

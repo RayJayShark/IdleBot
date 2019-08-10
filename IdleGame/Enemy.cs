@@ -12,7 +12,7 @@ namespace IdleGame
         private readonly uint _maxHp;
         private readonly uint _strength;
         private readonly uint _defence;
-        private Dictionary<ulong, uint> AttackLog = new Dictionary<ulong,uint>(); // <UserId, DamageDealt>
+        private Dictionary<ulong, uint> AttackLog = new Dictionary<ulong, uint>(); // <UserId, DamageDealt>
 
         private Enemy()
         {
@@ -66,6 +66,16 @@ namespace IdleGame
             return _hp;
         }
 
+        public uint GetMaxHp()
+        {
+            return _maxHp;
+        }
+
+        public Dictionary<ulong, uint> GetAttackLog()
+        {
+            return AttackLog;
+        }
+
         public string GetStats()
         {
             return $"Health: {_hp}\nStrength: {_strength}\nDefence: {_defence}";
@@ -103,7 +113,10 @@ namespace IdleGame
             foreach (var (id, damage) in AttackLog)
             {
                 var expToGive = (uint) (damage / (double) _maxHp) * (_level * 10);
-                Program.PlayerList[id].GiveExp(expToGive);
+                if (Program.PlayerList.ContainsKey(id))
+                {
+                    Program.PlayerList[id].GiveExp(expToGive);
+                }
             }
         }
 
