@@ -5,16 +5,19 @@ using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using IdleGame.Classes;
+using IdleGame.Services;
 
 namespace IdleGame.Modules
 {
     [Name("Game Commands")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
+        protected SqlService _sqlService { get; set; }
+        
         protected const string Y = "\uD83C\uDDFE";
         protected const string N = "\uD83C\uDDF3";
-        protected const string CHECK = "✅";
-        protected const string X = "❎";
+        private const string Check = "✅";
+        private const string X = "❎";
         protected ulong UserId;
         protected ulong DeleteId;
         private ulong _resetId;
@@ -34,15 +37,15 @@ namespace IdleGame.Modules
         public async Task NewPlayer()
         {
             var guildUser = (IGuildUser) Context.User;
-            string user = guildUser.Nickname == string.Empty ? Context.User.Username : guildUser.Nickname;
-            await Program.AddPlayer(Context.User.Id, user, Context.Channel.Id);
+            var user = guildUser.Nickname == string.Empty ? Context.User.Username : guildUser.Nickname;
+            await _sqlService.AddPlayer(Context.User.Id, user, Context.Channel.Id);
         }
 
         [Command("boost")]
         public async Task Boost()
         {
             var userId = Context.User.Id;
-            if (!CharacterCreated(userId))
+            if (!await CharacterCreated(userId))
                 return;
 
             try
@@ -58,7 +61,7 @@ namespace IdleGame.Modules
                 Program.PlayerList[userId].GiveExp(10);
 
                 Program.PlayerList[userId].ResetBoost();
-                Program.UpdateDatabase();
+                _sqlService.UpdateDatabase();
                 await ReplyAsync("You've been boosted!");
             }
             catch (Exception ex)
@@ -75,7 +78,7 @@ namespace IdleGame.Modules
             Player player;
             if (name.Equals(""))
             {
-                if (!CharacterCreated(Context.User.Id))
+                if (!await CharacterCreated(Context.User.Id))
                     return;
                 player = Program.PlayerList[Context.User.Id];
             }
@@ -116,7 +119,7 @@ namespace IdleGame.Modules
         [Alias("inv")]
         public async Task CheckInventory()
         {
-            if (!CharacterCreated(Context.User.Id))
+            if (!await CharacterCreated(Context.User.Id))
                 return;
             //TODO: Make prettier embed
             try
@@ -141,7 +144,7 @@ namespace IdleGame.Modules
         [Remarks("<item>")]
         public async Task UseItem(string itemName)
         {
-            if (!CharacterCreated(Context.User.Id))
+            if (!await CharacterCreated(Context.User.Id))
                 return;
 
             if (string.IsNullOrEmpty(itemName))
@@ -173,7 +176,7 @@ namespace IdleGame.Modules
             }
 
             await ReplyAsync($"You ate a {itemName} and gained {hpToGive} HP!");
-            Program.UpdateDatabase();
+            _sqlService.UpdateDatabase();
         }
 
         [Command("listenemies")]
@@ -209,7 +212,7 @@ namespace IdleGame.Modules
         public async Task AttackEnemy(uint enemyId)
         {
             //TODO: Make a better algorithm
-            if (!CharacterCreated(Context.User.Id))
+            if (!await CharacterCreated(Context.User.Id))
                 return;
 
             if (enemyId > Program.Enemies.Count || enemyId == 0)
@@ -238,7 +241,7 @@ namespace IdleGame.Modules
             };
             var message = await ReplyAsync("", false, embed.Build());
 
-            await message.AddReactionAsync(new Emoji(CHECK));
+            await message.AddReactionAsync(new Emoji(Check));
             await message.AddReactionAsync(new Emoji(X));
             UserId = Context.User.Id;
             _attackMessage = message;
@@ -252,7 +255,7 @@ namespace IdleGame.Modules
             if (reaction.MessageId != _attackMessage.Id || reaction.User.Value.IsBot)
                 return;
 
-            if (reaction.UserId != UserId || (!reaction.Emote.Name.Equals(CHECK) && !reaction.Emote.Name.Equals(X)))
+            if (reaction.UserId != UserId || (!reaction.Emote.Name.Equals(Check) && !reaction.Emote.Name.Equals(X)))
             {
                 await reaction.Message.Value.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
             }
@@ -297,7 +300,7 @@ namespace IdleGame.Modules
                     endingEmbed.AddField("Exp Distribution:", expDist);
                     await ReplyAsync("", false, endingEmbed.Build());
                     Program.Enemies.RemoveAt(_attackIndex);
-                    Program.UpdateDatabase();
+                    _sqlService.UpdateDatabase();
                     Context.Client.ReactionAdded -= AttackAgain;
                     return;
                 }
@@ -329,7 +332,7 @@ namespace IdleGame.Modules
         [Command("reset")]
         public async Task ResetPlayer()
         {
-            if (!CharacterCreated(Context.User.Id))
+            if (!await CharacterCreated(Context.User.Id))
                 return;
             
             var message = await ReplyAsync(
@@ -366,7 +369,7 @@ namespace IdleGame.Modules
                         }
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully reset.");
-                        Program.UpdateDatabase();
+                        _sqlService.UpdateDatabase();
                         _resetId = 0;
                         UserId = 0;
                         Context.Client.ReactionAdded -= ResetConfirmation;
@@ -385,7 +388,7 @@ namespace IdleGame.Modules
         [Command("delete")]
         public async Task DeletePlayer()
         {
-            if (!CharacterCreated(Context.User.Id))
+            if (!await CharacterCreated(Context.User.Id))
                 return;
             
             var message = await ReplyAsync(
@@ -408,9 +411,9 @@ namespace IdleGame.Modules
                     if (reaction.Emote.Name == Y)
                     {
                         Program.PlayerList.Remove(UserId);
-                        Program.ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
-                        Program.ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
-                        Program.ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        await _sqlService.ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        await _sqlService.ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
+                        await _sqlService.ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
@@ -428,13 +431,13 @@ namespace IdleGame.Modules
             }
         }
         
-        private bool CharacterCreated(ulong userId)
+        private async Task<bool> CharacterCreated(ulong userId)
         {
             if (Program.PlayerList.ContainsKey(userId))
             {
                 return true;
             }
-            Console.WriteLine($"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!");
+            await ReplyAsync($"You don't have a character. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}new\" to make one!");
             return false;
         }
     }
@@ -525,9 +528,9 @@ namespace IdleGame.Modules
                     if (reaction.Emote.Name == Y)
                     {
                         Program.PlayerList.Remove(UserId);
-                        Program.ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
-                        Program.ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
-                        Program.ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
+                        await _sqlService.ExecuteSql($"DELETE FROM inventory WHERE PlayerId = {UserId}");
+                        await _sqlService.ExecuteSql($"DELETE FROM stats WHERE PlayerId = {UserId}");
+                        await _sqlService.ExecuteSql($"DELETE FROM player WHERE Id = {UserId}");
                         await reaction.Message.Value.DeleteAsync();
                         await ReplyAsync("Your character was successfully deleted.");
                         Context.Client.ReactionAdded -= DeleteConfirmation;
