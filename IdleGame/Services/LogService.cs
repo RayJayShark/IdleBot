@@ -3,13 +3,9 @@ using System.Threading.Tasks;
 
 namespace IdleGame.Services
 {
-    public class LogService
+    public static class LogService
     {
-        public LogService()
-        {
 
-        }
-        
         public static void DatabaseLog(string log)
         {
             Console.WriteLine(GetTimestamp() + " Database    " + log);
