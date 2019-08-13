@@ -27,9 +27,6 @@ namespace IdleGame.Services
         private ulong _channelId;
         private RestUserMessage _message;
 
-        private LogService _logService { get; set; }
-        
-        
         public SqlService(string connStr)
         {
             _conn = new MySqlConnection(connStr);
