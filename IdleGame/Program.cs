@@ -36,13 +36,11 @@ namespace IdleGame
         private static IServiceProvider _services;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, ItemQuery> ItemMap = new Dictionary<uint, ItemQuery>();
-        public static List<Enemy> Enemies = new List<Enemy>();
-        private static Timer _enemyTimer;
+        public static readonly List<Enemy> Enemies = new List<Enemy>();
 
         private static SqlService _sqlService;
-        private static LogService _logService;
 
-        static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
+        private static void Main(string[] arg) => new Program().MainAsync().GetAwaiter().GetResult();
         private async Task MainAsync()
         {
             if (!File.Exists(".env"))
@@ -72,13 +70,10 @@ namespace IdleGame
 
             
             _sqlService = new SqlService(connStr);
-            _logService = new LogService();
 
             _services = new ServiceCollection()
                 .AddSingleton(_client)
-                .AddSingleton(_logService)
                 .AddSingleton(_sqlService)
-                .AddSingleton<TimerService>()
                 .BuildServiceProvider();
 
             _commands = new CommandService();
@@ -91,17 +86,9 @@ namespace IdleGame
             _client.MessageReceived += HandleCommandAsync;
             _client.Disconnected += HandleDisconnect;
 
-            var expTimer = new Timer();
-            expTimer.Elapsed += GiveExp;
-            expTimer.Interval = int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")) * 1000;
-            expTimer.Enabled = true;
-            
-            //TODO: Make timer use env variable
             Enemies.AddRange(Enemy.CreateMultiple(10));
-            _enemyTimer = new Timer();
-            _enemyTimer.Elapsed += RefreshEnemies;
-            _enemyTimer.Interval = 60 * 60 * 1000;
-            _enemyTimer.Enabled = true;
+            var timerService = new TimerService(int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")),
+                int.Parse(Environment.GetEnvironmentVariable("ENEMY_REFRESH_SECONDS")));
 
             await Task.Delay(-1);
         }
@@ -146,12 +133,6 @@ namespace IdleGame
         private async Task HandleDisconnect(Exception ex)
         {
             _sqlService.TestMySqlConnection();
-        }
-
-        private static void RefreshEnemies(object source, ElapsedEventArgs e)
-        {
-            Enemies.Clear();
-            Enemies.AddRange(Enemy.CreateMultiple(10));
         }
 
         public static SocketGuild GetGuild(ulong id)
@@ -200,22 +181,6 @@ namespace IdleGame
             }
 
             return 0;
-        }
-
-        private void GiveExp(object source, ElapsedEventArgs e)
-        {
-            foreach (var p in PlayerList)
-            {
-                var guild = _client.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
-                var user = guild.GetUser(p.Value.GetId());
-                if (user.VoiceState.HasValue && user.VoiceChannel.Id != guild.AFKChannel.Id)
-                {
-                    PlayerList[p.Key].GiveExp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_EXP")));
-                }
-                PlayerList[p.Key].GiveHp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_HP")));
-            }
-            LogService.GameLog("Exp given");
-            _sqlService.UpdateDatabase();
         }
     }
 }
