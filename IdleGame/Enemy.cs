@@ -19,11 +19,11 @@ namespace IdleGame
             //Create random enemy
             var rand = new Random();
             _name += (char) rand.Next(65, 91);
-            for (int i = 0; i < rand.Next(2, 12); i++)
+            for (var i = 0; i < rand.Next(2, 12); i++)
             {
                 _name += (char) rand.Next(97, 123);
             }
-
+            
             uint highestLevel = 0;
             var lowestLevel = uint.MaxValue;
             foreach (var p in Program.PlayerList)
@@ -34,7 +34,7 @@ namespace IdleGame
                     lowestLevel = p.Value.GetLevel();
             }
 
-            _level = (uint) rand.Next(Math.Clamp((int) lowestLevel - 5, 0, int.MaxValue), (int) highestLevel + 5);
+            _level = (uint) rand.Next(Math.Clamp((int) lowestLevel - 5, 1, int.MaxValue), (int) highestLevel + 5);
             _hp = (uint) rand.Next((int) _level * 2, (int) _level * 5);
             _maxHp = _hp;
             _strength = (uint) rand.Next((int) _level, (int) _level * 2);
