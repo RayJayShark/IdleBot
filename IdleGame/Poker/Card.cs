@@ -65,5 +65,15 @@ namespace IdleGame.Poker
                     return "";
             }
         }
+
+        public bool Equals(Card card)
+        {
+            if (String.CompareOrdinal(suit, card.suit) == 1 && value == card.value)
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }
