@@ -5,7 +5,7 @@ namespace IdleGame.Poker
 {
     public class Deck
     {
-        public List<Card> _cards = new List<Card>();
+        private List<Card> _cards = new List<Card>();
 
         public Deck()
         {
@@ -17,6 +17,19 @@ namespace IdleGame.Poker
                 }
             }
         }
+
+        public Card DrawCard()
+        {
+            var r = new Random();
+            var i = r.Next(0, _cards.Count - 1);
+            var card = _cards[i];
+            _cards.RemoveAt(i);
+            return card;
+        }
+        
+        public void RemoveCard(string suit, int value)
+        {
+            _cards.Remove(new Card(suit, value));
+        }
     }
-    
 }
