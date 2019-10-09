@@ -31,5 +31,17 @@ namespace IdleGame.Poker
         {
             _cards.Remove(new Card(suit, value));
         }
+
+        public void Shuffle()
+        {
+            var newDeck = new List<Card>();
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                newDeck.Add(DrawCard());
+            }
+
+            _cards = newDeck;
+            Console.WriteLine("Deck shuffled!");
+        }
     }
 }
