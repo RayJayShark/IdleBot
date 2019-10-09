@@ -1,6 +1,6 @@
 namespace IdleGame.Poker
 {
-    public class Hand
+    public struct Hand
     {
         
     }
