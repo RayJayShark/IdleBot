@@ -39,7 +39,6 @@ namespace IdleGame.Poker
                     break;
                 default:
                     throw new Exception("Invalid suit. Use plural name or first character.");
-                    break;
             }
             this.value = value;
         }
