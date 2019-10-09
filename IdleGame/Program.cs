@@ -67,13 +67,13 @@ namespace IdleGame
                        $"password={Environment.GetEnvironmentVariable("MYSQL_PASSWORD")};" +
                        $"database={Environment.GetEnvironmentVariable("MYSQL_DATABASE")};" +
                        $"port={Environment.GetEnvironmentVariable("MYSQL_PORT")}";
-
             
             _sqlService = new SqlService(connStr);
 
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_sqlService)
+                .AddSingleton(new PokerService())
                 .BuildServiceProvider();
 
             _commands = new CommandService();
