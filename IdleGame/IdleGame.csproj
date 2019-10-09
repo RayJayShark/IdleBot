@@ -12,4 +12,15 @@
       <PackageReference Include="MySql.Data" Version="8.0.16" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove=".env.example" />
+      <Content Include=".env.example">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <None Remove=".env" />
+      <Content Include=".env">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>
