@@ -106,19 +106,16 @@ namespace IdleGame.Services
                 return;
             }
 
-            if (_playerList.Count == 1)
-            {
-                await context.Channel.SendMessageAsync("You have successfully left the pregame lobby.");
-                await ClosePregame(context);
-                return;
-            }
-            
             foreach (var p in _playerList)
             {
                 if (p.Equals(context.User.Id))
                 {
                     _playerList.Remove(p);
                     await context.Channel.SendMessageAsync("You have successfully left the pregame lobby.");
+                    if (_playerList.Count == 0)
+                    {
+                        await ClosePregame(context); 
+                    }
                     return;
                 }
             }
