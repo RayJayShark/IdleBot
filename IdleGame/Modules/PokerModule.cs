@@ -27,17 +27,20 @@ namespace IdleGame.Modules
         public async Task JoinGame()
             => await PokerService.JoinGame(Context);
 
+        [Command("leavegame")]
+        [Alias("leave")]
+        public async Task LeaveGame()
+            => await PokerService.LeaveGame(Context);
+
         [Command("playerlist")]
         [Alias("plist")]
         public async Task ListPlayers()
             => await PokerService.ListPlayers(Context);
-        
+
         [Command("start")]
         [Alias("begin", "startgame")]
         public async Task BeginGame()
-        {
-            //TODO: Start playing the new game
-        }
+            => await PokerService.StartGame(Context);
 
         [Command("ptest")]
         public async Task Test()

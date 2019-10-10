@@ -66,6 +66,7 @@ namespace IdleGame.Services
             
             _playerList = new List<PokerPlayer>();
             _preGame = false;
+            await context.Channel.SendMessageAsync("Pregame lobby closed.");
         }
 
         public async Task JoinGame(SocketCommandContext context)
@@ -92,6 +93,34 @@ namespace IdleGame.Services
             await context.Channel.SendMessageAsync($"Welcome to the game {player.GetName()}!");
         }
 
+        public async Task LeaveGame(SocketCommandContext context)
+        {
+            if (!_preGame)
+            {
+                await context.Channel.SendMessageAsync("Not in pregame.");
+                return;
+            }
+
+            if (_playerList.Count == 1)
+            {
+                await context.Channel.SendMessageAsync("You have successfully left the pregame lobby.");
+                await ClosePregame(context);
+                return;
+            }
+            
+            foreach (var p in _playerList)
+            {
+                if (p.Equals(context.User.Id))
+                {
+                    _playerList.Remove(p);
+                    await context.Channel.SendMessageAsync("You have successfully left the pregame lobby.");
+                    return;
+                }
+            }
+
+            await context.Channel.SendMessageAsync("You are not in the lobby.");
+        }
+
         public async Task ListPlayers(SocketCommandContext context)
         {
             if (!_preGame && !_gameInProgress)
@@ -109,6 +138,11 @@ namespace IdleGame.Services
             embed.Description += "Total: " + _playerList.Count;
 
             await context.Channel.SendMessageAsync("", false, embed.Build());
+        }
+
+        public async Task StartGame(SocketCommandContext context)
+        {
+            //TODO: Start match
         }
     }
 }
