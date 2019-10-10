@@ -21,5 +21,11 @@ namespace IdleGame.Poker
         {
             return id == p.id;
         }
+
+        public bool Equals(ulong id)
+        {
+            return id == this.id;
+        }
+        
     }
 }
