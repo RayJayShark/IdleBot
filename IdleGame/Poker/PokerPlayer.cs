@@ -12,9 +12,24 @@ namespace IdleGame.Poker
             this.name = name;
         }
 
+        public void GiveHand(Card[] cards)
+        {
+            hand = new Hand(cards);
+        }
+
+        public ulong GetId()
+        {
+            return id;
+        }
+        
         public string GetName()
         {
             return name;
+        }
+
+        public Hand GetHand()
+        {
+            return hand;
         }
 
         public bool Equals(PokerPlayer p)
