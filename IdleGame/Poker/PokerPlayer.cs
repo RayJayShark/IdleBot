@@ -4,6 +4,7 @@ namespace IdleGame.Poker
     {
         private ulong id;
         private string name;
+        private int money = 100;
         private Hand hand;
 
         public PokerPlayer(ulong id, string name)
@@ -25,6 +26,21 @@ namespace IdleGame.Poker
         public string GetName()
         {
             return name;
+        }
+
+        public int GetMoney()
+        {
+            return money;
+        }
+
+        public void GiveMoney(int amount)
+        {
+            money += amount;
+        }
+
+        public int TakeMoney(int amount)
+        {
+            return money -= amount;
         }
 
         public Hand GetHand()
