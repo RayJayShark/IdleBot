@@ -4,9 +4,9 @@ namespace IdleGame.Poker
 {
     public struct Card
     {
-        public readonly string suit;
-        public readonly int value;
-        public readonly string color;
+        private readonly string suit;
+        private readonly int value;
+        private readonly string color;
 
         public Card(string suit, int value)
         {
@@ -45,11 +45,6 @@ namespace IdleGame.Poker
 
         public override string ToString()
         {
-            if (value > 1 && value < 11)
-            {
-                return value.ToString() + "of" + suit.Substring(0, 1).ToUpper();
-            }
-
             switch (value)
             {
                 case 1:
@@ -61,7 +56,7 @@ namespace IdleGame.Poker
                 case 13:
                     return "Kof" + suit.Substring(0, 1).ToUpper();
                 default:
-                    return "";
+                    return $"{value}of{suit.Substring(0,1).ToUpper()}";
             }
         }
 
