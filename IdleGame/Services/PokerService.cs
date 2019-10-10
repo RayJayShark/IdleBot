@@ -11,8 +11,11 @@ namespace IdleGame.Services
     {
         private bool _gameInProgress;
         private bool _preGame;
-        private List<PokerPlayer> _playerList;
+        private List<PokerPlayer> _playerList;     //TODO: Change to queue?
         private Deck _deck;
+        private int pot;
+        private int dealer;
+        private int currentPlayer;
 
         public PokerService()
         {
@@ -25,6 +28,8 @@ namespace IdleGame.Services
         {
             Console.WriteLine("Service test good");
         }
+        
+        // Pregame
         
         public async Task NewGame(SocketCommandContext context) 
         {
@@ -142,7 +147,25 @@ namespace IdleGame.Services
 
         public async Task StartGame(SocketCommandContext context)
         {
-            //TODO: Start match
+            await context.Channel.SendMessageAsync("Starting game...");
+
+            _preGame = false;
+            _gameInProgress = true;
+            _deck = new Deck();
+
+            await context.Channel.SendMessageAsync("Shuffling cards...");
+            _deck.Shuffle();
+
+            await context.Channel.SendMessageAsync("Dealing cards...");
+            foreach (var p in _playerList)
+            {
+                p.GiveHand(_deck.DrawCards(2));
+                var ch = await context.Guild.GetUser(p.GetId()).GetOrCreateDMChannelAsync();
+                await ch.SendMessageAsync("Your hand: " + p.GetHand());
+            }
+            await context.Channel.SendMessageAsync("Hands dealt.");
         }
     }
+    
+    // Ingame
 }
