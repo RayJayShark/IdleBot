@@ -46,7 +46,26 @@ namespace IdleGame.Services
             _playerList.Add(new PokerPlayer(user.Id, user.Nickname));
             _preGame = true;
             await context.Channel.SendMessageAsync(
-                $"New game started! Join with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}joingame\" and start with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}start\"!");
+                $"New game started! New players can join with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}joingame\" and the game can be started with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}start\"!");
+        }
+
+        public async Task ClosePregame(SocketCommandContext context)
+        {
+            if (_gameInProgress)
+            {
+                await context.Channel.SendMessageAsync("Game is currently in progress.");
+                return;
+            }
+            
+            if (!_preGame)
+            {
+                await context.Channel.SendMessageAsync(
+                    $"A game lobby hasn't been opened. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}newgame\" to start one!");
+                return;
+            }
+            
+            _playerList = new List<PokerPlayer>();
+            _preGame = false;
         }
 
         public async Task JoinGame(SocketCommandContext context)
@@ -56,10 +75,21 @@ namespace IdleGame.Services
                 await context.Channel.SendMessageAsync("Not in pregame.");
                 return;
             }
-
+            
             var user = (IGuildUser) context.User;
-            _playerList.Add(new PokerPlayer(user.Id, user.Nickname));
-            await context.Channel.SendMessageAsync("Successfully joined game!");
+            var player = new PokerPlayer(user.Id, user.Nickname);
+
+            foreach (var p in _playerList)
+            {
+                if (p.Equals(player))
+                {
+                    await context.Channel.SendMessageAsync("You're already in the game!");
+                    return;
+                }
+            }
+            
+            _playerList.Add(player);
+            await context.Channel.SendMessageAsync($"Welcome to the game {player.GetName()}!");
         }
 
         public async Task ListPlayers(SocketCommandContext context)
