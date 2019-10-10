@@ -16,5 +16,10 @@ namespace IdleGame.Poker
         {
             return name;
         }
+
+        public bool Equals(PokerPlayer p)
+        {
+            return id == p.id;
+        }
     }
 }
