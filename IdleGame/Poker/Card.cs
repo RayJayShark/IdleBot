@@ -1,12 +1,14 @@
 using System;
+using Discord;
 
 namespace IdleGame.Poker
 {
     public struct Card
     {
-        private readonly string suit;
-        private readonly int value;
-        private readonly string color;
+        private readonly string _suit;
+        private readonly int _value;
+        private readonly string _color;
+        private readonly Emoji _emoji;
 
         public Card(string suit, int value)
         {
@@ -19,50 +21,54 @@ namespace IdleGame.Poker
             {
                 case "clubs":
                 case "c":
-                    this.suit = "clubs";
-                    color = "black";
+                    _suit = "clubs";
+                    _color = "black";
+                    _emoji = new Emoji("♣");
                     break;
                 case "spades":
                 case "s":
-                    this.suit = "spades";
-                    color = "black";
+                    _suit = "spades";
+                    _color = "black";
+                    _emoji = new Emoji("♠");
                     break;
                 case "hearts":
                 case "h":
-                    this.suit = "hearts";
-                    color = "red";
+                    _suit = "hearts";
+                    _color = "red";
+                    _emoji = new Emoji("♥");
                     break;
                 case "diamonds": 
                 case "d":
-                    this.suit = "diamonds";
-                    color = "red";
+                    _suit = "diamonds";
+                    _color = "red";
+                    _emoji = new Emoji("♦");
                     break;
                 default:
                     throw new Exception("Invalid suit. Use plural name or first character.");
             }
-            this.value = value;
+            this._value = value;
         }
 
         public override string ToString()
         {
-            switch (value)
+            switch (_value)
             {
                 case 1:
-                    return "Aof" + suit.Substring(0, 1).ToUpper();
+                    return "A" + _emoji;
                 case 11:
-                    return "Jof" + suit.Substring(0, 1).ToUpper();
+                    return "J" + _emoji;
                 case 12:
-                    return "Qof" + suit.Substring(0, 1).ToUpper();
+                    return "Q" + _emoji;
                 case 13:
-                    return "Kof" + suit.Substring(0, 1).ToUpper();
+                    return "K" + _emoji;
                 default:
-                    return $"{value}of{suit.Substring(0,1).ToUpper()}";
+                    return $"{_value}{_emoji}";
             }
         }
 
         public bool Equals(Card card)
         {
-            if (String.CompareOrdinal(suit, card.suit) == 1 && value == card.value)
+            if (String.CompareOrdinal(_suit, card._suit) == 1 && _value == card._value)
             {
                 return true;
             }
