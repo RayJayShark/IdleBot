@@ -5,7 +5,7 @@ namespace IdleGame.Poker
 {
     public class Deck
     {
-        private List<Card> _cards = new List<Card>();        //TODO: Change to stack?
+        private Stack<Card> _cards = new Stack<Card>();        //TODO: Change to stack?
 
         public Deck()
         {
@@ -13,18 +13,14 @@ namespace IdleGame.Poker
             {
                 for (int i = 1; i <= 13; i++)
                 {
-                    _cards.Add(new Card(c.ToString(), i));
+                    _cards.Push(new Card(c.ToString(), i));
                 }
             }
         }
 
         public Card DrawCard()
         {
-            var r = new Random();
-            var i = r.Next(0, _cards.Count - 1);
-            var card = _cards[i];
-            _cards.RemoveAt(i);
-            return card;
+            return _cards.Pop();
         }
 
         public Card[] DrawCards(int amount)
@@ -37,20 +33,18 @@ namespace IdleGame.Poker
 
             return cards;
         }
-        
-        public void RemoveCard(string suit, int value)
-        {
-            _cards.Remove(new Card(suit, value));
-        }
 
         public void Shuffle()
         {
-            var newDeck = new List<Card>();
-            for (int i = 0; i < _cards.Count; i++)
+            var deck = _cards.ToArray();
+            
+            var newDeck = new Stack<Card>();
+            for (int i = deck.Length - 1; i >= 0; i--)
             {
-                newDeck.Add(DrawCard());
+                var r = new Random();
+                newDeck.Push(deck[r.Next(0,i)]);
             }
-
+            
             _cards = newDeck;
             Console.WriteLine("Deck shuffled!");
         }
