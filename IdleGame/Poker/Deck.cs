@@ -26,6 +26,17 @@ namespace IdleGame.Poker
             _cards.RemoveAt(i);
             return card;
         }
+
+        public Card[] DrawCards(int amount)
+        {
+            Card[] cards = new Card[amount];
+            for (int i = 0; i < amount; i++)
+            {
+                cards[i] = DrawCard();
+            }
+
+            return cards;
+        }
         
         public void RemoveCard(string suit, int value)
         {
