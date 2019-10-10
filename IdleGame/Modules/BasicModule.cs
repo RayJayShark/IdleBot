@@ -1,6 +1,10 @@
+using System;
+using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 
 namespace IdleGame.Modules
 {
@@ -24,6 +28,22 @@ namespace IdleGame.Modules
         {
             var emoji = new Emoji(e);
             await ReplyAsync("```" + emoji.Name + "```");
+        }
+
+        [Command("cleardm")]
+        [Description("Clears all bot-sent messages from your DMs.")]
+        public async Task ClearDm()
+        {
+            // Hits rate limit
+            var ch = await Context.User.GetOrCreateDMChannelAsync();
+            var messages = await ch.GetMessagesAsync().FlattenAsync();
+            foreach (var m in messages)
+            {
+                if (m.Author.IsBot)
+                {
+                    await m.DeleteAsync();
+                }
+            }
         }
         
     }
