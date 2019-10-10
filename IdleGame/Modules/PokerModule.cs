@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using Discord.Commands;
 using IdleGame.Poker;
@@ -9,24 +10,27 @@ namespace IdleGame.Modules
     [Name("Poker Commands")]
     public class PokerModule : ModuleBase<SocketCommandContext>
     {
-        public PokerService Pokerservice { get; set; }
+        public PokerService PokerService { get; set; }
 
         [Command("newgame")]
         [Alias("newg")]
         public async Task StartNewGame()
-            => await Pokerservice.NewGame(Context);
+            => await PokerService.NewGame(Context);
 
-
+        [Command("close")]
+        [Description("Closes the pregame lobby.")]
+        public async Task ClosePregame()
+            => await PokerService.ClosePregame(Context);
 
         [Command("joingame")]
         [Alias("join")]
         public async Task JoinGame()
-            => await Pokerservice.JoinGame(Context);
+            => await PokerService.JoinGame(Context);
 
         [Command("playerlist")]
         [Alias("plist")]
         public async Task ListPlayers()
-            => await Pokerservice.ListPlayers(Context);
+            => await PokerService.ListPlayers(Context);
         
         [Command("start")]
         [Alias("begin", "startgame")]
@@ -41,7 +45,7 @@ namespace IdleGame.Modules
             Console.WriteLine("Starting test...");
             try
             {
-                Pokerservice.Test();
+                PokerService.Test();
             }
             catch (Exception ex)
             {
