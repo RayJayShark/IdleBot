@@ -5,7 +5,7 @@ namespace IdleGame.Poker
 {
     public class Deck
     {
-        private Stack<Card> _cards = new Stack<Card>();        //TODO: Change to stack?
+        private Stack<Card> _cards = new Stack<Card>();
 
         public Deck()
         {
