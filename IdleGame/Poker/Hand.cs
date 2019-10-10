@@ -22,5 +22,10 @@ namespace IdleGame.Poker
                 throw new Exception("Hand must contain 2 cards.");
             }
         }
+
+        public override string ToString()
+        {
+            return $"{_cards[0].ToString()}, {_cards[1].ToString()}";
+        }
     }
 }
