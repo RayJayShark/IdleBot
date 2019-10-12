@@ -13,9 +13,9 @@ namespace IdleGame.Services
         private bool _preGame;
         private List<PokerPlayer> _playerList;     //TODO: Change to queue?
         private Deck _deck;
-        private int pot;
-        private int dealer;
-        private int currentPlayer;
+        private int _pot = 0;
+        private int _dealer;
+        private int _currentPlayer;
 
         public PokerService()
         {
@@ -162,7 +162,29 @@ namespace IdleGame.Services
             }
             await context.Channel.SendMessageAsync("Hands dealt.");
         }
+
+        public async Task EndGame(SocketCommandContext context)
+        {
+            if (_preGame)
+            {
+                await context.Channel.SendMessageAsync($"Still in pregame. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}close\" if you want to close the pregame lobby.");
+                return;
+            }
+
+            if (!_gameInProgress)
+            {
+                await context.Channel.SendMessageAsync("No game is in progress.");
+                return;
+            }
+
+            _gameInProgress = false;
+            _playerList = new List<PokerPlayer>();
+            _pot = 0;
+            await context.Channel.SendMessageAsync("Game has ended.");
+        }
+        
+        // Ingame
+        
+        
     }
-    
-    // Ingame
 }

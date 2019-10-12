@@ -39,8 +39,13 @@ namespace IdleGame.Modules
 
         [Command("start")]
         [Alias("begin", "startgame")]
-        public async Task BeginGame()
+        public async Task StartGame()
             => await PokerService.StartGame(Context);
+
+        [Command("end")]
+        [Alias("stop")]
+        public async Task EndGame()
+            => await PokerService.EndGame(Context);
 
         [Command("ptest")]
         public async Task Test()
