@@ -5,7 +5,7 @@ namespace IdleGame.Poker
         private ulong id;
         private string name;
         private int money = 100;
-        private Hand hand;
+        private HoleHand _holeHand;
 
         public PokerPlayer(ulong id, string name)
         {
@@ -15,7 +15,7 @@ namespace IdleGame.Poker
 
         public void GiveHand(Card[] cards)
         {
-            hand = new Hand(cards);
+            _holeHand = new HoleHand(cards);
         }
 
         public ulong GetId()
@@ -43,9 +43,9 @@ namespace IdleGame.Poker
             return money -= amount;
         }
 
-        public Hand GetHand()
+        public HoleHand GetHand()
         {
-            return hand;
+            return _holeHand;
         }
 
         public bool Equals(PokerPlayer p)
