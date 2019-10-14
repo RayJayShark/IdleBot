@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
@@ -9,9 +10,20 @@ namespace IdleGame.Services
 {
     public class PokerService
     {
-        private bool _gameInProgress;
-        private bool _preGame;
-        private List<PokerPlayer> _playerList;     //TODO: Change to queue?
+        private enum States
+        {
+            Closed,
+            Pregame,
+            Beginning,
+            Preflop,
+            Flop,
+            Turn,
+            River,
+            Showdown
+        };
+        
+        private States _gameState;
+        private List<PokerPlayer> _playerList;
         private Deck _deck;
         private int _pot = 0;
         private int _dealer;
@@ -19,8 +31,7 @@ namespace IdleGame.Services
 
         public PokerService()
         {
-            _gameInProgress = false;
-            _preGame = false;
+            _gameState = States.Closed;
             _playerList = new List<PokerPlayer>();
         }
 
@@ -33,14 +44,14 @@ namespace IdleGame.Services
         
         public async Task NewGame(SocketCommandContext context) 
         {
-            if (_preGame)
+            if (_gameState == States.Pregame)
             {
                 await context.Channel.SendMessageAsync(
                     $"Currently in pregame. Try joining with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}joingame\" or starting with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}start\"!");
                 return;
             }
 
-            if (_gameInProgress)
+            if (_gameState > States.Pregame)
             {
                 await context.Channel.SendMessageAsync(
                     "A game is currently in progress. Wait for it to finish before attempting to start a new one.");
@@ -49,20 +60,20 @@ namespace IdleGame.Services
 
             var user = (IGuildUser) context.User;
             _playerList.Add(new PokerPlayer(user.Id, user.Nickname));
-            _preGame = true;
+            _gameState = States.Pregame;
             await context.Channel.SendMessageAsync(
                 $"New game started! New players can join with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}joingame\" and the game can be started with \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}start\"!");
         }
 
         public async Task ClosePregame(SocketCommandContext context)
         {
-            if (_gameInProgress)
+            if (_gameState > States.Pregame)
             {
                 await context.Channel.SendMessageAsync("Game is currently in progress.");
                 return;
             }
             
-            if (!_preGame)
+            if (_gameState == States.Closed)
             {
                 await context.Channel.SendMessageAsync(
                     $"A game lobby hasn't been opened. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}newgame\" to start one!");
@@ -70,13 +81,13 @@ namespace IdleGame.Services
             }
             
             _playerList = new List<PokerPlayer>();
-            _preGame = false;
+            _gameState = States.Closed;
             await context.Channel.SendMessageAsync("Pregame lobby closed.");
         }
 
         public async Task JoinGame(SocketCommandContext context)
         {
-            if (!_preGame)
+            if (_gameState != States.Pregame)
             {
                 await context.Channel.SendMessageAsync("Not in pregame.");
                 return;
@@ -100,7 +111,7 @@ namespace IdleGame.Services
 
         public async Task LeaveGame(SocketCommandContext context)
         {
-            if (!_preGame)
+            if (_gameState != States.Pregame)
             {
                 await context.Channel.SendMessageAsync("Not in pregame.");
                 return;
@@ -125,7 +136,7 @@ namespace IdleGame.Services
 
         public async Task ListPlayers(SocketCommandContext context)
         {
-            if (!_preGame && !_gameInProgress)
+            if (_gameState == States.Closed)
             {
                 await context.Channel.SendMessageAsync("No game has been started.");
                 return;
@@ -146,10 +157,36 @@ namespace IdleGame.Services
         {
             await context.Channel.SendMessageAsync("Starting game...");
 
-            _preGame = false;
-            _gameInProgress = true;
+            _gameState = States.Beginning;
             _deck = new Deck();
 
+            await DealHands(context);
+        }
+
+        public async Task EndGame(SocketCommandContext context)
+        {
+            if (_gameState == States.Pregame)
+            {
+                await context.Channel.SendMessageAsync($"Still in pregame. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}close\" if you want to close the pregame lobby.");
+                return;
+            }
+
+            if (_gameState == States.Closed)
+            {
+                await context.Channel.SendMessageAsync("No game is in progress.");
+                return;
+            }
+
+            _gameState = States.Closed;
+            _playerList = new List<PokerPlayer>();
+            _pot = 0;
+            await context.Channel.SendMessageAsync("Game has ended.");
+        }
+        
+        // Ingame
+
+        private async Task DealHands(SocketCommandContext context)
+        {
             await context.Channel.SendMessageAsync("Shuffling cards...");
             _deck.Shuffle();
 
@@ -161,30 +198,8 @@ namespace IdleGame.Services
                 await ch.SendMessageAsync("Your hand: " + p.GetHand());
             }
             await context.Channel.SendMessageAsync("Hands dealt.");
+            
+            
         }
-
-        public async Task EndGame(SocketCommandContext context)
-        {
-            if (_preGame)
-            {
-                await context.Channel.SendMessageAsync($"Still in pregame. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}close\" if you want to close the pregame lobby.");
-                return;
-            }
-
-            if (!_gameInProgress)
-            {
-                await context.Channel.SendMessageAsync("No game is in progress.");
-                return;
-            }
-
-            _gameInProgress = false;
-            _playerList = new List<PokerPlayer>();
-            _pot = 0;
-            await context.Channel.SendMessageAsync("Game has ended.");
-        }
-        
-        // Ingame
-        
-        
     }
 }
