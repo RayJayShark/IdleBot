@@ -159,6 +159,10 @@ namespace IdleGame.Services
 
             _gameState = States.Beginning;
             _deck = new Deck();
+            foreach (var player in _playerList)
+            {
+                player.GiveMoney(100);
+            }
 
             await DealHands(context);
         }
