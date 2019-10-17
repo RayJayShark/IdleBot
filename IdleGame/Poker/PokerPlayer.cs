@@ -7,7 +7,7 @@ namespace IdleGame.Poker
     {
         private ulong id;
         private string name;
-        private int money = 100;
+        private int money;
         private HoleHand _holeHand;
         private IDMChannel _dmChannel;
 
