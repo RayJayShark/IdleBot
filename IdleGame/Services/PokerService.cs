@@ -218,7 +218,7 @@ namespace IdleGame.Services
                     var bigBlind = 0;
                     if (_dealer == _playerList.Count - 2)
                     {
-                        smallBlind = _dealer++;
+                        smallBlind = _dealer + 1;
                         bigBlind = 0;
                     }
                     else if (_dealer == _playerList.Count - 1)
