@@ -201,8 +201,7 @@ namespace IdleGame.Services
             foreach (var p in _playerList)
             {
                 p.GiveHand(_deck.DrawCards(2));
-                var ch = await context.Guild.GetUser(p.GetId()).GetOrCreateDMChannelAsync();
-                await ch.SendMessageAsync("Your hand: " + p.GetHand());
+                p.SendDM("Your hand: " + p.GetHand());
             }
             await context.Channel.SendMessageAsync("Hands dealt.");
 
@@ -235,7 +234,7 @@ namespace IdleGame.Services
                     await PlayRound(context);
                     return;
                 case States.Preflop:
-
+                    
                     break;
                 case States.Flop:
 
