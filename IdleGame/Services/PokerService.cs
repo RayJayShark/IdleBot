@@ -18,14 +18,18 @@ namespace IdleGame.Services
             Pregame,
             Beginning,
             Preflop,
+            BetweenFlop,
             Flop,
+            AfterFlop,
             Turn,
+            PreRiver,
             River,
             Showdown
         };
         
         private States _gameState;
         private List<PokerPlayer> _playerList;
+        private List<PokerPlayer> _foldedPlayers;
         private Deck _deck;
         private Card[] _river;
         private int _pot = 0;
@@ -38,6 +42,7 @@ namespace IdleGame.Services
         {
             _gameState = States.Closed;
             _playerList = new List<PokerPlayer>();
+            _foldedPlayers = new List<PokerPlayer>();
             _river = new Card[5];
         }
 
@@ -117,18 +122,14 @@ namespace IdleGame.Services
 
         public async Task LeaveGame(SocketCommandContext context)
         {
-            if (_gameState != States.Pregame)
-            {
-                await context.Channel.SendMessageAsync("Not in pregame.");
-                return;
-            }
-
+            //TODO: Make more efficient
             foreach (var p in _playerList)
             {
                 if (p.Equals(context.User.Id))
                 {
                     _playerList.Remove(p);
-                    await context.Channel.SendMessageAsync("You have successfully left the pregame lobby.");
+                    _foldedPlayers.Remove(p);
+                    await context.Channel.SendMessageAsync("You have successfully left the game.");
                     if (_playerList.Count == 0)
                     {
                         await ClosePregame(context); 
@@ -137,7 +138,7 @@ namespace IdleGame.Services
                 }
             }
 
-            await context.Channel.SendMessageAsync("You are not in the lobby.");
+            await context.Channel.SendMessageAsync("You are not in the game.");
         }
 
         public async Task ListPlayers(SocketCommandContext context)
@@ -211,16 +212,16 @@ namespace IdleGame.Services
 
         private async Task DealHands(SocketCommandContext context)
         {
-            await context.Channel.SendMessageAsync("Shuffling cards...");
+            Console.WriteLine("Shuffling cards...");
             _deck.Shuffle();
 
-            await context.Channel.SendMessageAsync("Dealing cards...");
+            Console.WriteLine("Dealing cards...");
             foreach (var p in _playerList)
             {
                 p.GiveHand(_deck.DrawCards(2));
                 p.SendDM("Your hand: " + p.GetHand());
             }
-            await context.Channel.SendMessageAsync("Hands dealt.");
+            Console.WriteLine("Hands dealt.");
 
             await StartRound(context.Message);
         }
@@ -234,6 +235,18 @@ namespace IdleGame.Services
             else
             {
                 _currentPlayer++;
+            }
+        }
+
+        private void IncrementDealer()
+        {
+            if (_dealer == _playerList.Count)
+            {
+                _dealer = 0;
+            }
+            else
+            {
+                _dealer++;
             }
         }
 
@@ -253,6 +266,11 @@ namespace IdleGame.Services
                     {
                         smallBlind = 0;
                         bigBlind = 1;
+                    }
+                    else
+                    {
+                        smallBlind = _dealer + 1;
+                        bigBlind = smallBlind + 1;
                     }
 
                     if (bigBlind == _playerList.Count - 1)
@@ -274,21 +292,131 @@ namespace IdleGame.Services
                     await StartRound(message);
                     return;
                 case States.Preflop:
-                    await message.Channel.SendMessageAsync($"{_playerList[_currentPlayer].GetName()}, would you like to **Call** the {_call} money, **Raise** by an *amount*, or **Fold**?");
+                    await message.Channel.SendMessageAsync($"{_playerList[_currentPlayer].GetName()}, would you like to **Call** the {_call - _playerList[_currentPlayer].GetTotalCall()} money, **Raise** by an *amount*, or **Fold**?");
                     Program.AddMessageEvent(PlayRound);
                     return;
+                case States.BetweenFlop:
+                    if (_dealer == _playerList.Count - 1)
+                    {
+                        _currentPlayer = 0;
+                    }
+                    else
+                    {
+                        _currentPlayer = _dealer + 1;
+                    }
+
+                    _playerToMatch = _currentPlayer;
+                    _call = 0;
+
+                    var flopCards = "";
+                    _deck.DrawCard();
+                    for (var i = 0; i < 3; i++)
+                    {
+                        _river[i] = _deck.DrawCard();
+                        flopCards += _river[i] + "   ";
+                    }
+                    await message.Channel.SendMessageAsync(flopCards);
+                    _gameState++;
+                    await StartRound(message);
+                    return;
                 case States.Flop:
-                    //TODO: Set current player next to dealer
-                    break;
+                    if (_call == 0)
+                    {
+                        await message.Channel.SendMessageAsync(
+                            $"{_playerList[_currentPlayer].GetName()}, would you like to **Check**, **Raise** by an *amount*, or **Fold**?");
+                    }
+                    else
+                    {
+                        await message.Channel.SendMessageAsync(
+                            $"{_playerList[_currentPlayer].GetName()}, would you like to **Call** the {_call - _playerList[_currentPlayer].GetTotalCall()} money, **Raise** by an *amount*, or **Fold**?"); 
+                    }
+
+                    Program.AddMessageEvent(PlayRound);
+                    return;
+                case States.AfterFlop:
+                    if (_dealer == _playerList.Count - 1)
+                    {
+                        _currentPlayer = 0;
+                    }
+                    else
+                    {
+                        _currentPlayer = _dealer + 1;
+                    }
+
+                    _playerToMatch = _currentPlayer;
+                    _call = 0;
+
+                    var turnCards = "";
+                    for (var i = 0; i < 3; i++)
+                    {
+                        turnCards += _river[i] + "   ";
+                    }
+
+                    _deck.DrawCard();
+                    _river[3] = _deck.DrawCard();
+                    turnCards += _river[3];
+
+                    await message.Channel.SendMessageAsync(turnCards);
+                    _gameState++;
+                    await StartRound(message);
+                    return;
                 case States.Turn:
+                    if (_call == 0)
+                    {
+                        await message.Channel.SendMessageAsync(
+                            $"{_playerList[_currentPlayer].GetName()}, would you like to **Check**, **Raise** by an *amount*, or **Fold**?");
+                    }
+                    else
+                    {
+                        await message.Channel.SendMessageAsync(
+                            $"{_playerList[_currentPlayer].GetName()}, would you like to **Call** the {_call - _playerList[_currentPlayer].GetTotalCall()} money, **Raise** by an *amount*, or **Fold**?"); 
+                    }
 
-                    break;
+                    Program.AddMessageEvent(PlayRound);
+                    return;
+                case States.PreRiver:
+                    if (_dealer == _playerList.Count - 1)
+                    {
+                        _currentPlayer = 0;
+                    }
+                    else
+                    {
+                        _currentPlayer = _dealer + 1;
+                    }
+                    
+                    _playerToMatch = _currentPlayer;
+                    _call = 0;
+                    
+                    var riverCards = "";
+                    for (var i = 0; i < 4; i++)
+                    {
+                        riverCards += _river[i] + "   ";
+                    }
+
+                    _deck.DrawCard();
+                    _river[4] = _deck.DrawCard();
+                    riverCards += _river[4];
+
+                    await message.Channel.SendMessageAsync(riverCards);
+                    _gameState++;
+                    await StartRound(message);
+                    return;
                 case States.River:
+                    if (_call == 0)
+                    {
+                        await message.Channel.SendMessageAsync(
+                            $"{_playerList[_currentPlayer].GetName()}, would you like to **Check**, **Raise** by an *amount*, or **Fold**?");
+                    }
+                    else
+                    {
+                        await message.Channel.SendMessageAsync(
+                            $"{_playerList[_currentPlayer].GetName()}, would you like to **Call** the {_call - _playerList[_currentPlayer].GetTotalCall()} money, **Raise** by an *amount*, or **Fold**?"); 
+                    }
 
-                    break;
-                
+                    Program.AddMessageEvent(PlayRound);
+                    return;
                 case States.Showdown:
-
+                    // TODO: Make algorithm to compare hands
                     return;
             }
         }
@@ -320,6 +448,12 @@ namespace IdleGame.Services
                     }
                     break;
                 case "call":
+                    if (_call == 0)
+                    {
+                        await message.Channel.SendMessageAsync("Nothing to call.");
+                        return;
+                    }
+                    
                     var toCall = _call - _playerList[_currentPlayer].GetTotalCall();
                     _pot += toCall;
                     _playerList[_currentPlayer].Call(toCall);
@@ -340,8 +474,7 @@ namespace IdleGame.Services
                     }
                     break;
                 case "raise":
-                    var raise = 0;
-                    if (command.Length < 2 || !int.TryParse(command[1], out raise))
+                    if (command.Length < 2 || !int.TryParse(command[1], out var raise))
                     {
                         await message.Channel.SendMessageAsync("Invalid raise amount. Must be a positive integer.");
                         return;
@@ -356,7 +489,7 @@ namespace IdleGame.Services
                 case "check":
                     if (_call > 0)
                     {
-                        await message.Channel.SendMessageAsync("Cannot check. Would you like to **Call** the " + _call + "money?");
+                        await message.Channel.SendMessageAsync("Cannot check. Would you like to **Call** the " + (_call - _playerList[_currentPlayer].GetTotalCall()) + "money?");
                         return;
                     }
 
@@ -365,6 +498,10 @@ namespace IdleGame.Services
                     {
                         await message.Channel.SendMessageAsync("All players checked. Onto the next stage...");
                         _gameState++;
+                    }
+                    else
+                    {
+                        IncrementPlayer();
                     }
                     break;
             }
