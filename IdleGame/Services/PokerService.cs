@@ -25,6 +25,7 @@ namespace IdleGame.Services
         private States _gameState;
         private List<PokerPlayer> _playerList;
         private Deck _deck;
+        private Card[] _river;
         private int _pot = 0;
         private int _dealer;
         private int _currentPlayer;
@@ -33,6 +34,7 @@ namespace IdleGame.Services
         {
             _gameState = States.Closed;
             _playerList = new List<PokerPlayer>();
+            _river = new Card[5];
         }
 
         public void Test()
@@ -161,7 +163,7 @@ namespace IdleGame.Services
             _deck = new Deck();
             foreach (var player in _playerList)
             {
-                player.GiveMoney(100);
+                player.GiveMoney(100);        //TODO: Change to env variable
             }
 
             await DealHands(context);
@@ -184,6 +186,7 @@ namespace IdleGame.Services
             _gameState = States.Closed;
             _playerList = new List<PokerPlayer>();
             _pot = 0;
+            _dealer = 0;
             await context.Channel.SendMessageAsync("Game has ended.");
         }
         
@@ -202,8 +205,52 @@ namespace IdleGame.Services
                 await ch.SendMessageAsync("Your hand: " + p.GetHand());
             }
             await context.Channel.SendMessageAsync("Hands dealt.");
-            
-            
+
+            await PlayRound(context);
+        }
+
+        private async Task PlayRound(SocketCommandContext context)
+        {
+            switch (_gameState)
+            {
+                case States.Beginning:
+                    var smallBlind = 0;
+                    var bigBlind = 0;
+                    if (_dealer == _playerList.Count - 2)
+                    {
+                        smallBlind = _dealer++;
+                        bigBlind = 0;
+                    }
+                    else if (_dealer == _playerList.Count - 1)
+                    {
+                        smallBlind = 0;
+                        bigBlind = 1;
+                    }
+
+                    _playerList[smallBlind].TakeMoney(5);
+                    _playerList[bigBlind].TakeMoney(10);
+                    _pot += 15;
+                    await context.Channel.SendMessageAsync($"Small blind of 5 posted by {_playerList[smallBlind].GetName()}, big blind of 10 posted by {_playerList[bigBlind].GetName()}.");
+                    _gameState++;
+                    await PlayRound(context);
+                    return;
+                case States.Preflop:
+
+                    break;
+                case States.Flop:
+
+                    break;
+                case States.Turn:
+
+                    break;
+                case States.River:
+
+                    break;
+                
+                case States.Showdown:
+
+                    return;
+            }
         }
     }
 }
