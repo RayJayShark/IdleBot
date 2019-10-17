@@ -331,7 +331,7 @@ namespace IdleGame.Services
                     }
                     
                     _playerList[smallBlind].TakeMoney(5);
-                    _playerList[bigBlind].TakeMoney(10);
+                    _playerList[bigBlind].Call(10);
                     _pot += 15;
                     _call = 10;
                     _playerToMatch = bigBlind;
