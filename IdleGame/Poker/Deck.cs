@@ -36,18 +36,22 @@ namespace IdleGame.Poker
 
         public void Shuffle()
         {
-            var deck = new List<Card>(_cards.ToArray());
-            
-            var newDeck = new Stack<Card>();
-            for (int i = deck.Count - 1; i >= 0; i--)
+            for (int j = 0; j < 3; j++)
             {
-                var r = new Random();
-                var indexToGrab = r.Next(0, i);
-                newDeck.Push(deck[indexToGrab]);
-                deck.RemoveAt(indexToGrab);
+                var deck = new List<Card>(_cards.ToArray());
+
+                var newDeck = new Stack<Card>();
+                for (int i = deck.Count - 1; i >= 0; i--)
+                {
+                    var r = new Random();
+                    var indexToGrab = r.Next(0, i);
+                    newDeck.Push(deck[indexToGrab]);
+                    deck.RemoveAt(indexToGrab);
+                }
+
+                _cards = newDeck;
             }
-            
-            _cards = newDeck;
+
             Console.WriteLine("Deck shuffled!");
         }
     }
