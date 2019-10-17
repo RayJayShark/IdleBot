@@ -28,6 +28,11 @@ namespace IdleGame.Poker
             _holeHand = new HoleHand(cards);
         }
 
+        public void ClearHand()
+        {
+            _holeHand = new HoleHand();
+        }
+
         public ulong GetId()
         {
             return id;
