@@ -56,7 +56,7 @@ namespace IdleGame.Poker
             return money;
         }
 
-        public int GetCall()
+        public int GetTotalCall()
         {
             return totalCall;
         }
