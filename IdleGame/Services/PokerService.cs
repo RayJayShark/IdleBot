@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.ComponentModel;
 using System.Globalization;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using IdleGame.Poker;
+using MySqlX.XDevAPI.Common;
 
 namespace IdleGame.Services
 {
@@ -184,7 +186,7 @@ namespace IdleGame.Services
                 player.GiveMoney(100);        //TODO: Change to env variable
             }
 
-            await DealHands(context);
+            await DealHands(context.Message);
         }
 
         public async Task EndGame(SocketCommandContext context)
@@ -209,8 +211,10 @@ namespace IdleGame.Services
         }
         
         // Ingame
+            
+            // Helpers
 
-        private async Task DealHands(SocketCommandContext context)
+        private async Task DealHands(SocketMessage message)
         {
             Console.WriteLine("Shuffling cards...");
             _deck.Shuffle();
@@ -223,7 +227,7 @@ namespace IdleGame.Services
             }
             Console.WriteLine("Hands dealt.");
 
-            await StartRound(context.Message);
+            await StartRound(message);
         }
 
         private void IncrementPlayer()
@@ -235,6 +239,11 @@ namespace IdleGame.Services
             else
             {
                 _currentPlayer++;
+            }
+
+            if (_foldedPlayers.Contains(_playerList[_currentPlayer]))
+            {
+                IncrementPlayer();
             }
         }
 
@@ -249,6 +258,45 @@ namespace IdleGame.Services
                 _dealer++;
             }
         }
+
+        private bool CheckForEnd()
+        {
+            if (_foldedPlayers.Count == 0)
+            {
+                if (_currentPlayer == _playerList.Count - 1)
+                {
+                    return _playerToMatch == 0;
+                }
+                
+                return _playerToMatch == _currentPlayer + 1;
+            }
+            
+            var nextPlayer = _currentPlayer;
+            if (nextPlayer == _playerList.Count - 1)
+            {
+                nextPlayer = 0;
+            }
+            else
+            {
+                nextPlayer++;
+            }
+            
+            while (_foldedPlayers.Contains(_playerList[nextPlayer]))
+            {
+                if (nextPlayer == _playerList.Count - 1)
+                {
+                    nextPlayer = 0;
+                }
+                else
+                {
+                    nextPlayer++;
+                }
+            }
+
+            return nextPlayer == _playerToMatch;
+        }
+        
+            // Gameplay
 
         private async Task StartRound(SocketMessage message)
         {
@@ -432,8 +480,26 @@ namespace IdleGame.Services
             switch (command[0])
             {
                 case "fold":
-                    if (_currentPlayer == _playerToMatch - 1 || (_currentPlayer == _playerList.Count - 1 && _playerToMatch == 0))
+                    if (CheckForEnd())
                     {
+                        _foldedPlayers.Add(_playerList[_currentPlayer]);
+                        if (_foldedPlayers.Count == _playerList.Count - 1)
+                        {
+                            await message.Channel.SendMessageAsync(_playerList[_currentPlayer].GetName() + " folds.");
+                            Program.RemoveMessageEvent(PlayRound);
+                            var winner = 0;
+                            for (var i = 0; i < _playerList.Count; i++)
+                            {
+                                if (_foldedPlayers.Contains(_playerList[i]))
+                                {
+                                    continue;
+                                }
+
+                                winner = i;
+                            }
+                            await WinPot(message, winner);
+                            return;
+                        }
                         await message.Channel.SendMessageAsync(_playerList[_currentPlayer].GetName() + " folds. Onto the next stage...");
                         _gameState++;
                         foreach (var p in _playerList)
@@ -443,8 +509,25 @@ namespace IdleGame.Services
                     }
                     else
                     {
+                        _foldedPlayers.Add(_playerList[_currentPlayer]);
                         await message.Channel.SendMessageAsync(_playerList[_currentPlayer].GetName() + " folds.");
                         IncrementPlayer();
+                        if (_foldedPlayers.Count == _playerList.Count - 1)
+                        {
+                            Program.RemoveMessageEvent(PlayRound);
+                            var winner = 0;
+                            for (var i = 0; i < _playerList.Count; i++)
+                            {
+                                if (_foldedPlayers.Contains(_playerList[i]))
+                                {
+                                    continue;
+                                }
+
+                                winner = i;
+                            }
+                            await WinPot(message, winner);
+                            return;
+                        }
                     }
                     break;
                 case "call":
@@ -457,8 +540,7 @@ namespace IdleGame.Services
                     var toCall = _call - _playerList[_currentPlayer].GetTotalCall();
                     _pot += toCall;
                     _playerList[_currentPlayer].Call(toCall);
-                    if (_currentPlayer == _playerToMatch - 1 ||
-                        (_currentPlayer == _playerList.Count - 1 && _playerToMatch == 0))
+                    if (CheckForEnd())
                     {
                         await message.Channel.SendMessageAsync(_playerList[_currentPlayer].GetName() + " calls. Onto the next stage...");
                         _gameState++;
@@ -493,8 +575,7 @@ namespace IdleGame.Services
                         return;
                     }
 
-                    if (_currentPlayer == _playerToMatch - 1 ||
-                        (_currentPlayer == _playerList.Count - 1 && _playerToMatch == 0))
+                    if (CheckForEnd())
                     {
                         await message.Channel.SendMessageAsync("All players checked. Onto the next stage...");
                         _gameState++;
@@ -504,10 +585,31 @@ namespace IdleGame.Services
                         IncrementPlayer();
                     }
                     break;
+                default:
+                    return;
             }
             
             Program.RemoveMessageEvent(PlayRound);
             await StartRound(message);
+        }
+
+        private async Task WinPot(SocketMessage message, int player)
+        {
+            _playerList[player].GiveMoney(_pot);
+            await message.Channel.SendMessageAsync($"{_playerList[player].GetName()} won this round with a pot of {_pot}!");
+            _pot = 0;
+            _currentPlayer = 0;
+            _gameState = States.Beginning;
+            _river = new Card[5];
+            _foldedPlayers = new List<PokerPlayer>();
+            _deck = new Deck();
+            foreach (var p in _playerList)
+            {
+                p.ClearHand();
+            }
+
+            IncrementDealer();
+            await DealHands(message);
         }
     }
 }
