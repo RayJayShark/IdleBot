@@ -149,6 +149,16 @@ namespace IdleGame
         {
             _client.ReactionAdded -= task;
         }
+
+        public static void AddMessageEvent(Func<SocketMessage, Task> task)
+        {
+            _client.MessageReceived += task;
+        }
+
+        public static void RemoveMessageEvent(Func<SocketMessage, Task> task)
+        {
+            _client.MessageReceived -= task;
+        }
         
         public static async Task Shutdown()
         {
