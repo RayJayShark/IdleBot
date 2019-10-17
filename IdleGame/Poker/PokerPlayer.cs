@@ -8,6 +8,7 @@ namespace IdleGame.Poker
         private ulong id;
         private string name;
         private int money;
+        private int totalCall;
         private HoleHand _holeHand;
         private IDMChannel _dmChannel;
 
@@ -15,6 +16,7 @@ namespace IdleGame.Poker
         {
             this.id = id;
             this.name = name;
+            totalCall = 0;
             var g = Program.GetGuild(ulong.Parse(Environment.GetEnvironmentVariable("GUILD_ID")));
             var u = g.GetUser(id);
             _dmChannel = u.GetOrCreateDMChannelAsync().Result;
@@ -52,6 +54,22 @@ namespace IdleGame.Poker
             money -= amount;
             SendDM("Money: " + money);
             return money;
+        }
+
+        public int GetCall()
+        {
+            return totalCall;
+        }
+
+        public int Call(int amount)
+        {
+            totalCall += amount;
+            return TakeMoney(amount);
+        }
+
+        public void ResetCall()
+        {
+            totalCall = 0;
         }
 
         public HoleHand GetHand()
