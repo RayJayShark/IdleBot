@@ -12,7 +12,7 @@ namespace IdleGame.Modules
     [Name("Game Commands")]
     public class GameModule : ModuleBase<SocketCommandContext>
     {
-        protected SqlService _sqlService { get; set; }
+        protected readonly SqlService _sqlService;
         
         protected const string Y = "\uD83C\uDDFE";
         protected const string N = "\uD83C\uDDF3";
@@ -23,6 +23,11 @@ namespace IdleGame.Modules
         private ulong _resetId;
         private IUserMessage _attackMessage;
         private int _attackIndex;
+
+        public GameModule(SqlService sqlService = null)
+        {
+            _sqlService = sqlService;
+        }
 
         [Command("intro")]
         public async Task Intro()
