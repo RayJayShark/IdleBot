@@ -107,7 +107,7 @@ namespace IdleGame.Services
             }
             
             var user = (IGuildUser) context.User;
-            var player = new PokerPlayer(user.Id, user.Nickname);
+            var player = new PokerPlayer(user.Id, user.Nickname ?? user.Username);
 
             foreach (var p in _playerList)
             {
