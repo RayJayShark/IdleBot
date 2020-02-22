@@ -42,7 +42,7 @@ namespace IdleGame.Modules
         public async Task NewPlayer()
         {
             var guildUser = (IGuildUser) Context.User;
-            var user = guildUser.Nickname == string.Empty ? Context.User.Username : guildUser.Nickname;
+            var user = guildUser.Nickname ?? Context.User.Username;
             await _sqlService.AddPlayer(Context.User.Id, user, Context.Channel.Id);
         }
 
