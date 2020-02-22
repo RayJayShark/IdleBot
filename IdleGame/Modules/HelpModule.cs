@@ -7,7 +7,6 @@ using Discord.Commands;
 
 namespace IdleGame.Modules
 {
-    //TODO: Check for admin commands (already checks for whole modules)
     //TODO: Check for empty module (currently gives null reference exception)
     [Name("Help Commands")]
     public class HelpModule : ModuleBase<SocketCommandContext>
