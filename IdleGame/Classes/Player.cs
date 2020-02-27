@@ -56,7 +56,7 @@ namespace IdleGame.Classes
         
         public double HoursSinceLastBoost()
         {
-            return double.Parse(((DateTime.UtcNow.ToTimestamp().Seconds - Boost.Seconds) / 60.0 / 60).ToString());
+            return ((DateTime.UtcNow.ToTimestamp().Seconds - Boost.Seconds) / 60.0 / 60);
         }
 
         public void ResetBoost()
@@ -125,26 +125,26 @@ namespace IdleGame.Classes
 
     public class PlayerStats
     {
-        private byte Health;
-        private byte Strength;
-        private byte Defence;
+        private ushort Health;
+        private ushort Strength;
+        private ushort Defence;
 
-        public byte GetHealth()
+        public ushort GetHealth()
         {
             return Health;
         }
 
-        public byte GetStrength()
+        public ushort GetStrength()
         {
             return Strength;
         }
 
-        public byte GetDefence()
+        public ushort GetDefence()
         {
             return Defence;
         }
         
-        public PlayerStats(byte health, byte strength, byte defence)
+        public PlayerStats(ushort health, ushort strength, ushort defence)
         {
             Health = health;
             Strength = strength;

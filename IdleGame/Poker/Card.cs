@@ -49,6 +49,16 @@ namespace IdleGame.Poker
             this._value = value;
         }
 
+        public int GetValue()
+        {
+            return _value;
+        }
+
+        public string GetSuit()
+        {
+            return _suit;
+        }
+        
         public override string ToString()
         {
             switch (_value)
