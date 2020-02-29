@@ -126,7 +126,6 @@ namespace IdleGame.Modules
         {
             if (!await CharacterCreated(Context.User.Id))
                 return;
-            //TODO: Make prettier embed
             try
             {
                 var player = Program.PlayerList[Context.User.Id];
@@ -146,8 +145,8 @@ namespace IdleGame.Modules
 
         [Command("use")]
         [Alias("eat")]
-        [Remarks("<item>")]
-        public async Task UseItem(string itemName)
+        [Remarks("<item> [amount]")]
+        public async Task UseItem(string itemName, uint amount = 1)
         {
             if (!await CharacterCreated(Context.User.Id))
                 return;
@@ -166,21 +165,21 @@ namespace IdleGame.Modules
             }
 
             var player = Program.PlayerList[Context.User.Id];
-            if (!player.Inventory.ContainsKey(itemId))
+            if (!player.Inventory.ContainsKey(itemId) || player.Inventory[itemId] < amount)
             {
-                await ReplyAsync($"You don't have a {itemName}.");
+                await ReplyAsync($"You don't have {amount} {itemName}(s).");
                 return;
             }
 
-            var hpToGive = Program.ItemMap[itemId].Value;
+            var hpToGive = Program.ItemMap[itemId].Value * amount;
             player.GiveHp(hpToGive);
-            player.Inventory[itemId] -= 1;
+            player.Inventory[itemId] -= amount;
             if (player.Inventory[itemId] == 0)
             {
                 player.Inventory.Remove(itemId);
             }
 
-            await ReplyAsync($"You ate a {itemName} and gained {hpToGive} HP!");
+            await ReplyAsync($"You ate {amount} {itemName}(s) and gained {hpToGive} HP!");
             _sqlService.UpdateDatabase();
         }
 
