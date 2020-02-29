@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata.Ecma335;
+using Newtonsoft.Json.Serialization;
 
 namespace IdleGame
 {
@@ -116,6 +117,10 @@ namespace IdleGame
                 if (Program.PlayerList.ContainsKey(id))
                 {
                     Program.PlayerList[id].GiveExp(expToGive);
+                }
+                else
+                {
+                    Console.WriteLine($"Error giving {expToGive} Exp to ID: {id} - Not found in player list");
                 }
             }
         }
