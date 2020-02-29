@@ -192,5 +192,11 @@ namespace IdleGame
 
             return 0;
         }
+
+        public static bool ValidItemId(uint itemId)
+        {
+            return ItemMap.ContainsKey(itemId);
+
+        }
     }
 }
