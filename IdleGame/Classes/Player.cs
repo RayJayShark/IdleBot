@@ -8,6 +8,7 @@ namespace IdleGame.Classes
     {
         //TODO: Use DateTimeOffset for boost???
         protected ulong Id;
+        protected string Avatar;
         protected string Name;
         protected string Faction;
         protected string Class;

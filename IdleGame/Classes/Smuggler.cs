@@ -19,9 +19,10 @@ namespace IdleGame.Classes
             Stats = new PlayerStats(100, 7, 7);
         }
         
-        public Smuggler(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
+        public Smuggler(ulong Id, string Avatar, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
         {
             this.Id = Id;
+            this.Avatar = Avatar;
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;
@@ -32,9 +33,10 @@ namespace IdleGame.Classes
             this.Boost = Boost.Add(TimeZoneInfo.Local.BaseUtcOffset.Add(TimeSpan.FromHours(1))).ToUniversalTime().ToTimestamp();
         }
         
-        public Smuggler(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost, PlayerStats Stats)
+        public Smuggler(ulong Id, string Avatar, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost, PlayerStats Stats)
         {
             this.Id = Id;
+            this.Avatar = Avatar;
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;

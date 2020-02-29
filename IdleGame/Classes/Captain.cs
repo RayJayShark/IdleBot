@@ -20,9 +20,10 @@ namespace IdleGame.Classes
             Stats = new PlayerStats(70, 7, 10);
         }
         
-        public Captain(ulong Id, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
+        public Captain(ulong Id, string Avatar, string Name, string Faction, string Class, uint CurHp, uint Money, uint Level, uint Exp, DateTime Boost)
         {
             this.Id = Id;
+            this.Avatar = Avatar;
             this.Name = Name;
             this.Faction = Faction;
             this.Class = Class;
