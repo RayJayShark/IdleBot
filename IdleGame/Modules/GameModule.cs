@@ -173,11 +173,7 @@ namespace IdleGame.Modules
 
             var hpToGive = Program.ItemMap[itemId].Value * amount;
             player.GiveHp(hpToGive);
-            player.Inventory[itemId] -= amount;
-            if (player.Inventory[itemId] == 0)
-            {
-                player.Inventory.Remove(itemId);
-            }
+            player.TakeItem(itemId, amount);
 
             await ReplyAsync($"You ate {amount} {itemName}(s) and gained {hpToGive} HP!");
             _sqlService.UpdateDatabase();
