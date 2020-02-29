@@ -298,6 +298,18 @@ namespace IdleGame.Modules
                     }
 
                     endingEmbed.AddField("Exp Distribution:", expDist);
+                    var rewards = enemy.Rewards();
+                    if (rewards.Item1)
+                    {
+                        player.GiveMoney(rewards.Item2);
+                        player.GiveItem("taco");
+                        endingEmbed.Footer = new EmbedFooterBuilder {Text = $"{player.GetName()} also got {rewards.Item2} money and a taco!"};
+                    }
+                    else
+                    {
+                        player.GiveMoney(rewards.Item2);
+                        endingEmbed.Footer = new EmbedFooterBuilder {Text = $"{player.GetName()} also got {rewards.Item2} money!"};
+                    }
                     await ReplyAsync("", false, endingEmbed.Build());
                     Program.Enemies.RemoveAt(_attackIndex);
                     _sqlService.UpdateDatabase();

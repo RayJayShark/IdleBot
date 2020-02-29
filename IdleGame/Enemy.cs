@@ -106,6 +106,7 @@ namespace IdleGame
             {
                 AttackLog.Add(userId, damage);
             }
+            
             return false;
         }
 
@@ -125,10 +126,21 @@ namespace IdleGame
             }
         }
 
+        public (bool, uint) Rewards()
+        {
+            var rand = new Random();
+            var money = (uint) rand.Next(1, 11);
+            if (rand.Next(1, 11) == 5)
+            {
+                return (true, money);          // Give taco
+            }
+            return (false, money);             // Don't give taco
+        }
+
         public static Enemy[] CreateMultiple(int amount)
         {
             var enemyArray = new Enemy[amount];
-            for (int i = 0; i < amount; i++)
+            for (var i = 0; i < amount; i++)
             {
                 enemyArray[i] = new Enemy();
             }
