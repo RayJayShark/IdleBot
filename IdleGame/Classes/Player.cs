@@ -45,6 +45,16 @@ namespace IdleGame.Classes
             return Money;
         }
 
+        public void GiveMoney(uint amount)
+        {
+            Money += amount;
+        }
+
+        public void TakeMoney(uint amount)
+        {
+            Money -= amount;
+        }
+
         public uint GetLevel()
         {
             return Level;
@@ -89,6 +99,72 @@ namespace IdleGame.Classes
             {
                 CurHp = Stats.GetHealth();
             }
+        }
+
+        public bool GiveItem(string itemName, uint amount = 1)
+        {
+            var itemId = Program.FindItemId(itemName);
+            if (itemId == 0)
+            {
+                Console.WriteLine($"\"{itemName}\" isn't an item.");
+                return false;
+            }
+            return GiveItem(itemId, amount);
+        }
+        public bool GiveItem(uint itemId, uint amount = 1)
+        {
+            if (!Program.ValidItemId(itemId))
+            {
+                Console.WriteLine($"\"{itemId}\" not a valid item id");
+                return false;
+            }
+
+            if (!Inventory.ContainsKey(itemId))
+            {
+                Inventory.Add(itemId, amount);
+            }
+            else
+            {
+                Inventory[itemId] += amount;
+            }
+
+            return true;
+        }
+        
+        public bool TakeItem(string itemName, uint amount = 1)
+        {
+            var itemId = Program.FindItemId(itemName);
+            if (itemId == 0)
+            {
+                Console.WriteLine($"\"{itemName}\" isn't an item.");
+                return false;
+            }
+            return GiveItem(itemId, amount);
+        }
+
+        public bool TakeItem(uint itemId, uint amount)
+        {
+            if (!Program.ValidItemId(itemId))
+            {
+                Console.WriteLine($"\"{itemId}\" not a valid item id");
+                return false;
+            }
+            
+            if (!Inventory.ContainsKey(itemId) || Inventory[itemId] > amount)
+            {
+                Console.WriteLine($"{Name} doesn't have enough of item id \"{itemId}\"");
+                return false;
+            }
+            
+            if (Inventory[itemId] == amount)
+            {
+                Inventory.Remove(itemId);
+            }
+            else
+            {
+                Inventory[itemId] -= amount;
+            }
+            return true;
         }
 
         public bool TakeDamage(uint damage)
