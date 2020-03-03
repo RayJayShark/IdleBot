@@ -113,7 +113,7 @@ namespace IdleGame.Modules
             }
 
             embed.Title = $"{player.GetName()} - {player.GetFaction()} {player.GetClass()}";
-            embed.Description = $"Level {player.GetLevel()}\nExp: {player.GetExp()}/{player.GetLevel() * 10}";
+            embed.Description = $"Level {player.GetLevel()}\nExp: {player.GetExp()}/{player.GetLevel() * 10}\nMoney: {player.GetMoney()}";
             embed.AddField("Stats:",
                 $"Health: {player.GetCurrentHp()}/{player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
 
