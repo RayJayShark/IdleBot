@@ -73,7 +73,6 @@ namespace IdleGame
             _services = new ServiceCollection()
                 .AddSingleton(_client)
                 .AddSingleton(_sqlService)
-                .AddSingleton(new PokerService())
                 .BuildServiceProvider();
 
             _commands = new CommandService();
