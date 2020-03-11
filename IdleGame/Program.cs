@@ -1,29 +1,15 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Data;
-using System.Data.Common;
 using System.IO;
-using System.Linq;
-using System.Net.Sockets;
-using System.Net.WebSockets;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Timers;
-using Dapper;
 using Discord;
 using Discord.Commands;
-using Discord.Rest;
 using Discord.WebSocket;
 using dotenv.net;
-using Google.Protobuf.WellKnownTypes;
 using IdleGame.Classes;
 using IdleGame.Services;
 using Microsoft.Extensions.DependencyInjection;
-using MySql.Data.MySqlClient;
-using Org.BouncyCastle.Asn1.Crmf;
 
 
 namespace IdleGame

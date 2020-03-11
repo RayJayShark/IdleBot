@@ -1,5 +1,4 @@
 using System;
-using Discord.Rest;
 using Google.Protobuf.WellKnownTypes;
 
 namespace IdleGame.Classes

@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
-using Newtonsoft.Json.Serialization;
 
 namespace IdleGame
 {

@@ -6,7 +6,6 @@ using Dapper;
 using Discord;
 using Discord.Rest;
 using Discord.WebSocket;
-using dotenv.net;
 using IdleGame.Classes;
 using MySql.Data.MySqlClient;
 
