@@ -71,7 +71,7 @@ namespace IdleGame
             _client.MessageReceived += HandleCommandAsync;
             _client.Disconnected += HandleDisconnect;
 
-            Enemies.AddRange(Enemy.CreateMultiple(10));
+            Enemies.AddRange(Enemy.CreateMultiple(PlayerList.Count * 3));
             var timerService = new TimerService(int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")),
                 int.Parse(Environment.GetEnvironmentVariable("ENEMY_REFRESH_SECONDS")));
 

@@ -40,7 +40,7 @@ namespace IdleGame.Services
         private static void RefreshEnemies(object source, ElapsedEventArgs e)
         {
             Program.Enemies.Clear();
-            Program.Enemies.AddRange(Enemy.CreateMultiple(10));
+            Program.Enemies.AddRange(Enemy.CreateMultiple(Program.PlayerList.Count * 3));
             LogService.GameLog("Enemies refreshed");
         }
     }
