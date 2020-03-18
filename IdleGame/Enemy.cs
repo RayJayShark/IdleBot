@@ -40,6 +40,23 @@ namespace IdleGame
             _defence = (uint) rand.Next((int) _level, (int) _level * 2);
         }
 
+        private Enemy(uint level)
+        {
+            //Create random enemy
+            var rand = new Random();
+            _name += (char) rand.Next(65, 91);
+            for (var i = 0; i < rand.Next(2, 12); i++)
+            {
+                _name += (char) rand.Next(97, 123);
+            }
+
+            _level = level;
+            _hp = (uint) rand.Next((int) _level * 2, (int) _level * 5);
+            _maxHp = _hp;
+            _strength = (uint) rand.Next((int) _level, (int) _level * 2);
+            _defence = (uint) rand.Next((int) _level, (int) _level * 2);
+        }
+
         public string GetName()
         {
             return _name;
@@ -135,12 +152,36 @@ namespace IdleGame
             return (false, money);             // Don't give taco
         }
 
-        public static Enemy[] CreateMultiple(int amount)
+        public static Enemy[] CreateMultipleRandom(int amount)
         {
             var enemyArray = new Enemy[amount];
             for (var i = 0; i < amount; i++)
             {
                 enemyArray[i] = new Enemy();
+            }
+            return enemyArray;
+        }
+
+        public static Enemy[] CreatePerPlayer(int amount)
+        {
+            var enemyArray = new Enemy[amount];
+            var rand = new Random();
+            var i = 0;
+            foreach (var p in Program.PlayerList)
+            {
+                var pLevel = p.Value.GetLevel();
+                for (var j = 0; j < 3; j++)
+                {
+                    if (pLevel <= 5)
+                    {
+                        enemyArray[i++] = new Enemy((uint) rand.Next(1, checked((int) pLevel + 6)));
+                    }
+                    else
+                    {
+                        enemyArray[i++] =
+                            new Enemy((uint) rand.Next(checked((int) pLevel - 5), checked((int) pLevel + 6)));
+                    }
+                }
             }
             return enemyArray;
         }
