@@ -152,7 +152,7 @@ namespace IdleGame.Modules
 
             if (string.IsNullOrEmpty(itemName))
             {
-                await ReplyAsync($"Command for using items in your inventory.\nUsage: *{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}use <item>*");
+                await ReplyAsync($"Command for using items in your inventory.\nUsage: *{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}use <item> [amount]*");
                 return;
             }
 
@@ -176,6 +176,39 @@ namespace IdleGame.Modules
 
             await ReplyAsync($"You ate {amount} {itemName}(s) and gained {hpToGive} HP!");
             _sqlService.UpdateDatabase();
+        }
+        
+        [Command("buy")]
+        [Remarks("<item> [amount]")]
+        public async Task BuyItem(string itemName, uint amount = 1)
+        {
+            if (!await CharacterCreated(Context.User.Id))
+                return;
+
+            if (string.IsNullOrEmpty(itemName))
+            {
+                await ReplyAsync($"Command for buying an item.\nUsage: *{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}buy <item> [amount]*");
+                return;
+            }
+
+            var itemId = Program.FindItemId(itemName);
+            if (itemId == 0)
+            {
+                await ReplyAsync($"\"{itemName}\" isn't an item.");
+                return;
+            }
+
+            var totalCost = Program.ItemMap[itemId].Cost * amount;
+            var player = Program.PlayerList[Context.User.Id];
+            if (player.GetMoney() < totalCost)
+            {
+                await ReplyAsync($"You don't have enough money! You have {player.GetMoney()} and you need {totalCost}!");
+                return;
+            }
+            
+            player.TakeMoney(totalCost);
+            player.GiveItem(itemId, amount);
+            await ReplyAsync($"You bought {amount} {itemName}(s) for {totalCost}! Enjoy!");
         }
 
         [Command("listenemies")]
