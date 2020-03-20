@@ -286,6 +286,7 @@ namespace IdleGame.Services
         public uint Id;
         public string Name;
         public uint Value;
+        public uint Cost;
     }
     
     public struct InventoryQuery
