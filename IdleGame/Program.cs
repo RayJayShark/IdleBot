@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Discord;
@@ -22,7 +23,7 @@ namespace IdleGame
         private static IServiceProvider _services;
         public static Dictionary<ulong, Player> PlayerList;
         public static Dictionary<uint, ItemQuery> ItemMap = new Dictionary<uint, ItemQuery>();
-        public static readonly List<Enemy> Enemies = new List<Enemy>();
+        public static List<Enemy> Enemies = new List<Enemy>();
 
         private static SqlService _sqlService;
 
@@ -72,6 +73,7 @@ namespace IdleGame
             _client.Disconnected += HandleDisconnect;
 
             Enemies.AddRange(Enemy.CreatePerPlayer(PlayerList.Count * 3));
+            Enemies = Enemies.OrderBy(en => en.GetLevel()).ToList();
             var timerService = new TimerService(int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")),
                 int.Parse(Environment.GetEnvironmentVariable("ENEMY_REFRESH_SECONDS")));
 

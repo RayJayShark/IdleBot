@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Timers;
 
 namespace IdleGame.Services
@@ -41,6 +42,7 @@ namespace IdleGame.Services
         {
             Program.Enemies.Clear();
             Program.Enemies.AddRange(Enemy.CreatePerPlayer(Program.PlayerList.Count * 3));
+            Program.Enemies = Program.Enemies.OrderBy(en => en.GetLevel()).ToList();
             LogService.GameLog("Enemies refreshed");
         }
     }
