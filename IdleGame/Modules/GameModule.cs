@@ -1,10 +1,13 @@
 using System;
+using System.ComponentModel;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Commands;
 using Discord.WebSocket;
 using IdleGame.Classes;
 using IdleGame.Services;
+using Org.BouncyCastle.Asn1.Esf;
 
 namespace IdleGame.Modules
 {
@@ -209,6 +212,31 @@ namespace IdleGame.Modules
             player.TakeMoney(totalCost);
             player.GiveItem(itemId, amount);
             await ReplyAsync($"You bought {amount} {itemName}(s) for {totalCost}! Enjoy!");
+        }
+
+        [Command("store")]
+        public async Task OpenStore()
+        {
+            var embed = new EmbedBuilder();
+            var page = new Paginator{ Title = "Store", Color = Color.LightOrange};
+            var i = 1;
+            foreach (var item in Program.ItemMap)
+            {
+                embed.Description += $"{item.Value.Name}: {item.Value.Cost} Money\n";
+                if (i % 5 == 0)
+                {
+                    page.AddPage(embed);
+                    embed = new EmbedBuilder();
+                }
+                i++;
+            }
+
+            if (embed.Description != "")
+            {
+                page.AddPage(embed);
+            }
+            
+            page.SendMessage(Context);
         }
 
         [Command("listenemies")]
