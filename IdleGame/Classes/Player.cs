@@ -52,7 +52,14 @@ namespace IdleGame.Classes
 
         public void TakeMoney(uint amount)
         {
-            Money -= amount;
+            if (amount > Money)
+            {
+                Money = 0;
+            }
+            else
+            {
+                Money -= amount;
+            }
         }
 
         public uint GetLevel()
