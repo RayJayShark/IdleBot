@@ -41,6 +41,12 @@ namespace IdleGame
 
         public void SendMessage(SocketCommandContext context)
         {
+            if (_pages.Count == 1)
+            {
+                context.Channel.SendMessageAsync("", false, _pages[0].Build());
+                return;
+            }
+            
             for (int i = 0; i < _pages.Count; i++)
             {
                 _pages[i].Title += $" ({i + 1}/{_pages.Count})";
