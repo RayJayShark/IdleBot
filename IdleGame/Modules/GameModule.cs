@@ -152,12 +152,7 @@ namespace IdleGame.Modules
         {
             if (!await CharacterCreated(Context.User.Id))
                 return;
-
-            if (string.IsNullOrEmpty(itemName))
-            {
-                await ReplyAsync($"Command for using items in your inventory.\nUsage: *{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}use <item> [amount]*");
-                return;
-            }
+            
 
             var itemId = Program.FindItemId(itemName);
             if (itemId == 0)
@@ -187,12 +182,6 @@ namespace IdleGame.Modules
         {
             if (!await CharacterCreated(Context.User.Id))
                 return;
-
-            if (string.IsNullOrEmpty(itemName))
-            {
-                await ReplyAsync($"Command for buying an item.\nUsage: *{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}buy <item> [amount]*");
-                return;
-            }
 
             var itemId = Program.FindItemId(itemName);
             if (itemId == 0)
