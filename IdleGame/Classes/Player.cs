@@ -157,7 +157,7 @@ namespace IdleGame.Classes
                 return false;
             }
             
-            if (!Inventory.ContainsKey(itemId) || Inventory[itemId] > amount)
+            if (!Inventory.ContainsKey(itemId) || Inventory[itemId] < amount)
             {
                 Console.WriteLine($"{Name} doesn't have enough of item id \"{itemId}\"");
                 return false;
