@@ -201,6 +201,7 @@ namespace IdleGame.Modules
             player.TakeMoney(totalCost);
             player.GiveItem(itemId, amount);
             await ReplyAsync($"You bought {amount} {itemName}(s) for {totalCost}! Enjoy!");
+            _sqlService.UpdateDatabase();
         }
 
         [Command("store")]
