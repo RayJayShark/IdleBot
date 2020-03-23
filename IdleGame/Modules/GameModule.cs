@@ -326,6 +326,62 @@ namespace IdleGame.Modules
             Context.Client.ReactionAdded += TradeConfirmation;
         }
 
+        [Command("give")]
+        [Alias("gv", "gift")]
+        [Remarks("<player> <item> [amount]")]
+        public async Task Give(string player, string itemName, uint amount = 1)
+        {
+            if (!await CharacterCreated(Context.User.Id))
+                return;
+
+            var itemId = Program.FindItemId(itemName);
+            if (itemName.ToLower().Equals("money"))
+            {
+                itemId = uint.MaxValue;
+            }
+            else if (itemId == 0)
+            {
+                await ReplyAsync($"\"{itemName}\" isn't an item.");
+                return;
+            }
+
+            var playerTwo = Program.FindPlayer(player);
+            if (playerTwo.GetId() == 0)
+            {
+                await ReplyAsync(player + " doesn't have a character. Tell 'em to create one with \"" +
+                                 Environment.GetEnvironmentVariable("COMMAND_PREFIX") + "new!\"");
+                return;
+            }
+
+            var playerOne = Program.PlayerList[Context.User.Id];
+            if (playerOne.GetId() == playerTwo.GetId())
+            {
+                await ReplyAsync("You can't trade with yourself.");
+                return;
+            }
+
+            if ((itemId != uint.MaxValue &&
+                 (!playerOne.Inventory.ContainsKey(itemId) || playerTwo.Inventory[itemId] == 0)) ||
+                (itemId == uint.MaxValue && playerOne.GetMoney() < amount))
+            {
+                await ReplyAsync("You don't have enough " + itemName + "(s)");
+                return;
+            }
+
+            if (itemId == uint.MaxValue)
+            {
+                playerOne.TakeMoney(amount);
+                playerTwo.GiveMoney(amount);
+            }
+            else
+            {
+                playerOne.TakeItem(itemId, amount);
+                playerTwo.GiveItem(itemId, amount);
+            }
+
+            await ReplyAsync($"{playerOne.GetName()} gave {playerTwo.GetName()} {amount} {itemName}(s)!");
+        }
+
         private async Task TradeConfirmation(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
             SocketReaction reaction)
         {
