@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Data;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 using Discord;
@@ -23,6 +24,13 @@ namespace IdleGame.Modules
         protected ulong UserId;
         protected ulong DeleteId;
         private ulong _resetId;
+        private IUserMessage _tradeMessage;
+        private ulong _tradeUserOne;
+        private ulong _tradeUserTwo;
+        private uint _tradeYourItemID;
+        private uint _tradeTheirItemId;
+        private uint _tradeYourAmount;
+        private uint _tradeTheirAmount;
         private IUserMessage _attackMessage;
         private int _attackIndex;
 
@@ -227,6 +235,142 @@ namespace IdleGame.Modules
             }
             
             page.SendMessage(Context);
+        }
+
+        [Command("trade")]
+        [Alias("tr")]
+        [Remarks("<player> <yourItem> [amount] <theirItem> [amount]")]
+        public async Task Trade(string player, string yourItemName, string yourAmount, string theirItemName = "", uint theirAmount = 1)
+        {
+            if (!await CharacterCreated(Context.User.Id))
+                return;
+
+            if (!uint.TryParse(yourAmount, out var amount))
+            {
+                amount = 1;
+                if (!string.IsNullOrEmpty(theirItemName) && !uint.TryParse(theirItemName, out theirAmount))
+                {
+                    await ReplyAsync("Invalid amount for second item");
+                    return;
+                }
+
+                theirItemName = yourAmount;
+            }
+
+            var yourItemId = Program.FindItemId(yourItemName);
+            var theirItemId = Program.FindItemId(theirItemName);
+            if (yourItemName.ToLower() == "money")
+            {
+                yourItemId = uint.MaxValue;
+            }
+            else if (yourItemId == 0)
+            {
+                await ReplyAsync($"\"{yourItemName}\" isn't an item.");
+                return;
+            }
+            
+            if (theirItemName.ToLower() == "money")
+            {
+                theirItemId = uint.MaxValue;
+            }
+            else if (theirItemId == 0)
+            {
+                await ReplyAsync($"\"{theirItemName}\" isn't an item.");
+                return;
+            }
+
+            var playerTwo = Program.FindPlayer(player);
+            if (playerTwo.GetId() == 0)
+            {
+                await ReplyAsync(player + " doesn't have a character. Tell 'em to create one with \"" +
+                                 Environment.GetEnvironmentVariable("COMMAND_PREFIX") + "new!\"");
+                return;
+            }
+            if ((theirItemId != uint.MaxValue && (!playerTwo.Inventory.ContainsKey(theirItemId) || playerTwo.Inventory[theirItemId] == 0)) || (theirItemId == uint.MaxValue && playerTwo.GetMoney() < theirAmount))
+            {
+                await ReplyAsync(player + " doesn't have enough " + theirItemName + "(s)");
+                return;
+            }
+
+            var playerOne = Program.PlayerList[Context.User.Id];
+            if (playerOne.GetId() == playerTwo.GetId())
+            {
+                await ReplyAsync("You can't trade with yourself.");
+                return;
+            }
+            if ((yourItemId != uint.MaxValue && (!playerOne.Inventory.ContainsKey(yourItemId) || playerTwo.Inventory[yourItemId] == 0)) || (yourItemId == uint.MaxValue && playerOne.GetMoney() < amount))
+            {
+                await ReplyAsync("You don't have enough " + yourItemName + "(s)");
+                return;
+            }
+
+            var embed = new EmbedBuilder
+            {
+                Title =
+                    $"Does {playerTwo.GetName()} accept the trade?",
+                Color = Color.Gold,
+                Description =
+                    $"{playerOne.GetName()} would like to trade {amount} {yourItemName} for {theirAmount} {theirItemName}",
+                Footer = new EmbedFooterBuilder {Text = "Do you accept?"}
+            };
+
+            _tradeUserOne = Context.User.Id;
+            _tradeUserTwo = playerTwo.GetId();
+            _tradeYourItemID = yourItemId;
+            _tradeTheirItemId = theirItemId;
+            _tradeYourAmount = amount;
+            _tradeTheirAmount = theirAmount;
+            _tradeMessage = await ReplyAsync(Context.Client.GetUser(playerTwo.GetId()).Mention + $", {playerOne.GetName()} wants to trade with you!", false, embed.Build());
+            await _tradeMessage.AddReactionAsync(new Emoji(Y));
+            await _tradeMessage.AddReactionAsync(new Emoji(N));
+            Context.Client.ReactionAdded += TradeConfirmation;
+        }
+
+        private async Task TradeConfirmation(Cacheable<IUserMessage, ulong> message, ISocketMessageChannel channel,
+            SocketReaction reaction)
+        {
+            if (reaction.User.Value.IsBot || message.Id != _tradeMessage.Id)
+                return;
+            
+            if (reaction.UserId != _tradeUserTwo || (!reaction.Emote.Name.Equals(Y) && !reaction.Emote.Name.Equals(N)))
+            {
+                await _tradeMessage.RemoveReactionAsync(reaction.Emote, reaction.User.Value);
+                return;
+            }
+
+            Context.Client.ReactionAdded -= TradeConfirmation;
+            await _tradeMessage.DeleteAsync();
+            if (reaction.Emote.Name.Equals(Y))
+            {
+                if (_tradeYourItemID == uint.MaxValue)
+                {
+                    Program.PlayerList[_tradeUserOne].TakeMoney(_tradeYourAmount);
+                    Program.PlayerList[_tradeUserTwo].GiveMoney(_tradeYourAmount);
+                }
+                else
+                {
+                    Program.PlayerList[_tradeUserOne].TakeItem(_tradeYourItemID, _tradeYourAmount);
+                    Program.PlayerList[_tradeUserTwo].GiveItem(_tradeYourItemID, _tradeYourAmount);
+                }
+
+                if (_tradeTheirItemId == uint.MaxValue)
+                {
+                    Program.PlayerList[_tradeUserTwo].TakeMoney(_tradeTheirAmount);
+                    Program.PlayerList[_tradeUserOne].GiveMoney(_tradeTheirAmount);
+                }
+                else
+                {
+                    Program.PlayerList[_tradeUserTwo].TakeItem(_tradeTheirItemId, _tradeTheirAmount);
+                    Program.PlayerList[_tradeUserOne].GiveItem(_tradeTheirItemId, _tradeTheirAmount);
+                }
+
+                await ReplyAsync("Trade accepted!");
+            }
+            else
+            {
+                await ReplyAsync("Trade declined");
+            }
+            _sqlService.UpdateDatabase();
         }
 
         [Command("listenemies")]
