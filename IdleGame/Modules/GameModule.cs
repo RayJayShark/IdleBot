@@ -340,28 +340,30 @@ namespace IdleGame.Modules
 
             Context.Client.ReactionAdded -= TradeConfirmation;
             await _tradeMessage.DeleteAsync();
+            var playerOne = Program.PlayerList[_tradeUserOne];
+            var playerTwo = Program.PlayerList[_tradeUserTwo];
             if (reaction.Emote.Name.Equals(Y))
             {
                 if (_tradeYourItemID == uint.MaxValue)
                 {
-                    Program.PlayerList[_tradeUserOne].TakeMoney(_tradeYourAmount);
-                    Program.PlayerList[_tradeUserTwo].GiveMoney(_tradeYourAmount);
+                    playerOne.TakeMoney(_tradeYourAmount);
+                    playerTwo.GiveMoney(_tradeYourAmount);
                 }
                 else
                 {
-                    Program.PlayerList[_tradeUserOne].TakeItem(_tradeYourItemID, _tradeYourAmount);
-                    Program.PlayerList[_tradeUserTwo].GiveItem(_tradeYourItemID, _tradeYourAmount);
+                    playerOne.TakeItem(_tradeYourItemID, _tradeYourAmount);
+                    playerTwo.GiveItem(_tradeYourItemID, _tradeYourAmount);
                 }
 
                 if (_tradeTheirItemId == uint.MaxValue)
                 {
-                    Program.PlayerList[_tradeUserTwo].TakeMoney(_tradeTheirAmount);
-                    Program.PlayerList[_tradeUserOne].GiveMoney(_tradeTheirAmount);
+                    playerTwo.TakeMoney(_tradeTheirAmount);
+                    playerOne.GiveMoney(_tradeTheirAmount);
                 }
                 else
                 {
-                    Program.PlayerList[_tradeUserTwo].TakeItem(_tradeTheirItemId, _tradeTheirAmount);
-                    Program.PlayerList[_tradeUserOne].GiveItem(_tradeTheirItemId, _tradeTheirAmount);
+                    playerTwo.TakeItem(_tradeTheirItemId, _tradeTheirAmount);
+                    playerOne.GiveItem(_tradeTheirItemId, _tradeTheirAmount);
                 }
 
                 await ReplyAsync("Trade accepted!");
