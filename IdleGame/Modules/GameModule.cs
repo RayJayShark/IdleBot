@@ -310,7 +310,7 @@ namespace IdleGame.Modules
                     $"Does {playerTwo.GetName()} accept the trade?",
                 Color = Color.Gold,
                 Description =
-                    $"{playerOne.GetName()} would like to trade {amount} {yourItemName} for {theirAmount} {theirItemName}",
+                    $"{playerOne.GetName()} would like to trade {amount} {yourItemName}(s) for {theirAmount} {theirItemName}(s)",
                 Footer = new EmbedFooterBuilder {Text = "Do you accept?"}
             };
 
@@ -321,6 +321,70 @@ namespace IdleGame.Modules
             _tradeYourAmount = amount;
             _tradeTheirAmount = theirAmount;
             _tradeMessage = await ReplyAsync(Context.Client.GetUser(playerTwo.GetId()).Mention + $", {playerOne.GetName()} wants to trade with you!", false, embed.Build());
+            await _tradeMessage.AddReactionAsync(new Emoji(Y));
+            await _tradeMessage.AddReactionAsync(new Emoji(N));
+            Context.Client.ReactionAdded += TradeConfirmation;
+        }
+
+        [Command("request")]
+        [Alias("req", "rq", "take")]
+        [Remarks("<player> <item> [amount]")]
+        public async Task Request(string player, string itemName, uint amount = 1)
+        {
+            if (!await CharacterCreated(Context.User.Id))
+                return;
+
+            var itemId = Program.FindItemId(itemName);
+            if (itemName.ToLower().Equals("money"))
+            {
+                itemId = uint.MaxValue;
+            }
+            else if (itemId == 0)
+            {
+                await ReplyAsync($"\"{itemName}\" isn't an item.");
+                return;
+            }
+
+            var playerTwo = Program.FindPlayer(player);
+            if (playerTwo.GetId() == 0)
+            {
+                await ReplyAsync(player + " doesn't have a character. Tell 'em to create one with \"" +
+                                 Environment.GetEnvironmentVariable("COMMAND_PREFIX") + "new!\"");
+                return;
+            }
+
+            var playerOne = Program.PlayerList[Context.User.Id];
+            if (playerOne.GetId() == playerTwo.GetId())
+            {
+                await ReplyAsync("You can't request from yourself.");
+                return;
+            }
+
+            if ((itemId != uint.MaxValue &&
+                 (!playerTwo.Inventory.ContainsKey(itemId) || playerTwo.Inventory[itemId] == 0)) ||
+                (itemId == uint.MaxValue && playerOne.GetMoney() < amount))
+            {
+                await ReplyAsync(playerTwo.GetName() + " doesn't have enough " + itemName + "(s)");
+                return;
+            }
+            
+            var embed = new EmbedBuilder
+            {
+                Title =
+                    $"Does {playerTwo.GetName()} accept the request?",
+                Color = Color.Gold,
+                Description =
+                    $"{playerOne.GetName()} requests a gift of {amount} {itemName}(s)",
+                Footer = new EmbedFooterBuilder {Text = "Do you accept?"}
+            };
+
+            _tradeUserOne = Context.User.Id;
+            _tradeUserTwo = playerTwo.GetId();
+            _tradeYourItemID = uint.MaxValue;
+            _tradeTheirItemId = itemId;
+            _tradeYourAmount = 0;
+            _tradeTheirAmount = amount;
+            _tradeMessage = await ReplyAsync(Context.Client.GetUser(playerTwo.GetId()).Mention + $", {playerOne.GetName()} has a request!", false, embed.Build());
             await _tradeMessage.AddReactionAsync(new Emoji(Y));
             await _tradeMessage.AddReactionAsync(new Emoji(N));
             Context.Client.ReactionAdded += TradeConfirmation;
@@ -356,12 +420,12 @@ namespace IdleGame.Modules
             var playerOne = Program.PlayerList[Context.User.Id];
             if (playerOne.GetId() == playerTwo.GetId())
             {
-                await ReplyAsync("You can't trade with yourself.");
+                await ReplyAsync("You can't give to yourself.");
                 return;
             }
 
             if ((itemId != uint.MaxValue &&
-                 (!playerOne.Inventory.ContainsKey(itemId) || playerTwo.Inventory[itemId] == 0)) ||
+                 (!playerOne.Inventory.ContainsKey(itemId) || playerOne.Inventory[itemId] == 0)) ||
                 (itemId == uint.MaxValue && playerOne.GetMoney() < amount))
             {
                 await ReplyAsync("You don't have enough " + itemName + "(s)");
