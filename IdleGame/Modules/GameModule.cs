@@ -298,7 +298,7 @@ namespace IdleGame.Modules
                 await ReplyAsync("You can't trade with yourself.");
                 return;
             }
-            if ((yourItemId != uint.MaxValue && (!playerOne.Inventory.ContainsKey(yourItemId) || playerTwo.Inventory[yourItemId] == 0)) || (yourItemId == uint.MaxValue && playerOne.GetMoney() < amount))
+            if ((yourItemId != uint.MaxValue && (!playerOne.Inventory.ContainsKey(yourItemId) || playerOne.Inventory[yourItemId] == 0)) || (yourItemId == uint.MaxValue && playerOne.GetMoney() < amount))
             {
                 await ReplyAsync("You don't have enough " + yourItemName + "(s)");
                 return;
