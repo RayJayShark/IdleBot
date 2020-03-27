@@ -15,6 +15,7 @@ namespace IdleGame.Services
     {
        
         private MySqlConnection _conn;
+        private DiscordSocketClient _client;
 
         private const string One = "1⃣";
         private const string Two = "2⃣";
@@ -26,10 +27,12 @@ namespace IdleGame.Services
         private ulong _channelId;
         private RestUserMessage _message;
 
-        public SqlService(string connStr)
+        public SqlService(string connStr, DiscordSocketClient client = null)
         {
             _conn = new MySqlConnection(connStr);
             TestMySqlConnection();
+
+            _client = client;
         }
         
         public void TestMySqlConnection()
@@ -257,12 +260,17 @@ namespace IdleGame.Services
                     return;
             }
 
+            var avatar = _client.GetUser(_newPlayerId).GetAvatarUrl();
+            if (string.IsNullOrEmpty(avatar))
+            {
+                avatar = _client.GetUser(_newPlayerId).GetDefaultAvatarUrl();
+            }
+            
             try
             {
-                _conn.Execute($"INSERT INTO player (Id,Name,Faction,Class,CurHp) VALUES({_newPlayerId}, '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}', {Program.PlayerList[_newPlayerId].Stats.GetHealth()})");
+                _conn.Execute($"INSERT INTO player (Id,Avatar,Name,Faction,Class,CurHp) VALUES({_newPlayerId}, '{avatar}', '{_newPlayerName}', '{_newPlayerFaction}', '{_newPlayerClass}', {Program.PlayerList[_newPlayerId].Stats.GetHealth()})");
                 _conn.Execute($"INSERT INTO inventory VALUES({_newPlayerId}, 1, 10)");
                 _conn.Execute($"INSERT INTO stats VALUES({_newPlayerId}, {Program.PlayerList[_newPlayerId].Stats.GetHealth()}, {Program.PlayerList[_newPlayerId].Stats.GetStrength()}, {Program.PlayerList[_newPlayerId].Stats.GetDefence()})");
-                Program.PlayerList[_newPlayerId].Inventory.Add(1, 10);
                 Program.PlayerList[_newPlayerId].GiveItem(1, 10);
             }
             catch (Exception ex)
