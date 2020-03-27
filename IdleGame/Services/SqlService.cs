@@ -263,6 +263,7 @@ namespace IdleGame.Services
                 _conn.Execute($"INSERT INTO inventory VALUES({_newPlayerId}, 1, 10)");
                 _conn.Execute($"INSERT INTO stats VALUES({_newPlayerId}, {Program.PlayerList[_newPlayerId].Stats.GetHealth()}, {Program.PlayerList[_newPlayerId].Stats.GetStrength()}, {Program.PlayerList[_newPlayerId].Stats.GetDefence()})");
                 Program.PlayerList[_newPlayerId].Inventory.Add(1, 10);
+                Program.PlayerList[_newPlayerId].GiveItem(1, 10);
             }
             catch (Exception ex)
             {
