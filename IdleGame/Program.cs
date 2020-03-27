@@ -55,7 +55,7 @@ namespace IdleGame
                        $"database={Environment.GetEnvironmentVariable("MYSQL_DATABASE")};" +
                        $"port={Environment.GetEnvironmentVariable("MYSQL_PORT")}";
             
-            _sqlService = new SqlService(connStr);
+            _sqlService = new SqlService(connStr, _client);
 
             _services = new ServiceCollection()
                 .AddSingleton(_client)
