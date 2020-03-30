@@ -148,19 +148,22 @@ namespace IdleGame.Services
         
         public void UpdateDatabase()
         {
-            CleanInventories();
             foreach (var p in Program.PlayerList)
             {
-                _conn.Execute($"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.GetMoney()}, Level = {p.Value.GetLevel()}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
-                _conn.Execute($"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.GetId()}");
-                
+                _conn.Execute(
+                    $"UPDATE player SET CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.GetMoney()}, Level = {p.Value.GetLevel()}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                _conn.Execute(
+                    $"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.GetId()}");
+
                 foreach (var i in p.Value.Inventory)
                 {
-                    _conn.Execute($"UPDATE inventory SET Quantity = {i.Value} WHERE PlayerId = {p.Key} AND ItemId = {i.Key}");
+                    _conn.Execute(
+                        $"UPDATE inventory SET Quantity = {i.Value} WHERE PlayerId = {p.Key} AND ItemId = {i.Key}");
                 }
             }
-            
+
             _conn.Execute("DELETE FROM inventory WHERE Quantity = 0");
+            CleanInventories();
             LogService.DatabaseLog("Database updated");
         }
 

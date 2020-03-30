@@ -8,9 +8,9 @@ namespace IdleGame.Services
     {
         private readonly Timer _expTimer = new Timer();
         private readonly Timer _enemyTimer = new Timer();
+        private SqlService _sqlService;
         
-        private SqlService SqlService { get; set; }
-        public TimerService(int expTime, int enemyTime)
+        public TimerService(int expTime, int enemyTime, SqlService sqlService)
         {
             _expTimer.Interval = expTime * 1000;
             _expTimer.Elapsed += GiveExp;
@@ -20,6 +20,8 @@ namespace IdleGame.Services
 
             _expTimer.Enabled = true;
             _enemyTimer.Enabled = true;
+
+            _sqlService = sqlService;
         }
         
         private void GiveExp(object source, ElapsedEventArgs e)
@@ -35,7 +37,7 @@ namespace IdleGame.Services
                 Program.PlayerList[p.Key].GiveHp(uint.Parse(Environment.GetEnvironmentVariable("IDLE_HP")));
             }
             LogService.GameLog("Exp given");
-            SqlService.UpdateDatabase();
+            _sqlService.UpdateDatabase();
         }
         
         private static void RefreshEnemies(object source, ElapsedEventArgs e)

@@ -75,7 +75,7 @@ namespace IdleGame
             Enemies.AddRange(Enemy.CreatePerPlayer(PlayerList.Count * 3));
             Enemies = Enemies.OrderBy(en => en.GetLevel()).ToList();
             var timerService = new TimerService(int.Parse(Environment.GetEnvironmentVariable("EXP_SECONDS")),
-                int.Parse(Environment.GetEnvironmentVariable("ENEMY_REFRESH_SECONDS")));
+                int.Parse(Environment.GetEnvironmentVariable("ENEMY_REFRESH_SECONDS")), _sqlService);
 
             await Task.Delay(-1);
         }
