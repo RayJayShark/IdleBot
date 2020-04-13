@@ -56,6 +56,33 @@ namespace IdleGame.Modules
             await _sqlService.AddPlayer(Context.User.Id, user, Context.Channel.Id);
         }
 
+        [Command("changename")]
+        [Alias("newname", "updatename", "cn")]
+        [Remarks("[new name]")]
+        public async Task ChangeName([Remainder] string newName = "")
+        {
+            var userId = Context.User.Id;
+            if (!await CharacterCreated(userId))
+                return;
+
+            if (string.IsNullOrEmpty(newName))
+            {
+                var guildUser = (IGuildUser) Context.User;
+                newName = guildUser.Nickname ?? Context.User.Username;
+            }
+
+            var player = Program.PlayerList[userId];
+            if (player.GetName().Equals(newName))
+            {
+                await ReplyAsync("That's already your name!");
+                return;
+            }
+            
+            player.SetName(newName);
+            _sqlService.UpdateDatabase();
+            await ReplyAsync($"You've successfully changed your character's name to ``{newName}``");
+        }
+
         [Command("boost")]
         public async Task Boost()
         {
