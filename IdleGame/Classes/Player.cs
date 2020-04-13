@@ -30,6 +30,11 @@ namespace IdleGame.Classes
             return Name;
         }
 
+        public void SetName(string s)
+        {
+            Name = s;
+        }
+
         public string GetFaction()
         {
             return Faction;
