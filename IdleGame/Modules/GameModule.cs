@@ -150,6 +150,20 @@ namespace IdleGame.Modules
             }
 
             embed.Title = $"{player.GetName()} - {player.GetFaction()} {player.GetClass()}";
+            
+            var user = Context.Client.GetUser(player.GetId());
+            var avatar = user.GetAvatarUrl();
+            if (string.IsNullOrEmpty(avatar))
+            {
+                avatar = user.GetDefaultAvatarUrl();
+            }
+
+            if (!player.GetAvatar().Equals(avatar))
+            {
+                player.SetAvatar(avatar);
+                _sqlService.UpdateDatabase();
+            }
+            embed.ThumbnailUrl = player.GetAvatar();
             embed.Description = $"Level {player.GetLevel()}\nExp: {player.GetExp()}/{player.GetLevel() * 10}\nMoney: {player.GetMoney()}";
             embed.AddField("Stats:",
                 $"Health: {player.GetCurrentHp()}/{player.Stats.GetHealth()}\nStrength: {player.Stats.GetStrength()}\nDefence: {player.Stats.GetDefence()}");
