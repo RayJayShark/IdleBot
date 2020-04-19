@@ -151,7 +151,7 @@ namespace IdleGame.Services
             foreach (var p in Program.PlayerList)
             {
                 _conn.Execute(
-                    $"UPDATE player SET Name = '{p.Value.GetName()}', CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.GetMoney()}, Level = {p.Value.GetLevel()}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
+                    $"UPDATE player SET Name = '{p.Value.GetName()}', Avatar = '{p.Value.GetAvatar()}', CurHp = {p.Value.GetCurrentHp()}, Money = {p.Value.GetMoney()}, Level = {p.Value.GetLevel()}, Exp = {p.Value.GetExp()}, Boost = '{p.Value.GetBoost().ToDateTime():yyyy-MM-dd HH:mm:ss}' WHERE Id = {p.Key}");
                 _conn.Execute(
                     $"UPDATE stats SET Health = {p.Value.Stats.GetHealth()}, Strength = {p.Value.Stats.GetStrength()}, Defence = {p.Value.Stats.GetDefence()} WHERE PlayerId = {p.Value.GetId()}");
 
