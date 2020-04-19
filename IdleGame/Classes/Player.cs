@@ -25,6 +25,16 @@ namespace IdleGame.Classes
             return Id;
         }
 
+        public string GetAvatar()
+        {
+            return Avatar;
+        }
+
+        public void SetAvatar(string avatar)
+        {
+            Avatar = avatar;
+        }
+
         public string GetName()
         {
             return Name;
