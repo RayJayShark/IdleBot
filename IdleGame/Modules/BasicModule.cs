@@ -42,6 +42,12 @@ namespace IdleGame.Modules
                 }
             }
         }
+
+        [Command("echo")]
+        public async Task Echo([Remainder] string phrase)
+        {
+            await ReplyAsync("```" + phrase + "```");
+        }
         
     }
 }
