@@ -31,7 +31,7 @@ namespace IdleGame.Modules
         [Description("Clears all bot-sent messages from your DMs.")]
         public async Task ClearDm()
         {
-            // Hits rate limit
+            //TODO: Hits rate limit
             var ch = await Context.User.GetOrCreateDMChannelAsync();
             var messages = await ch.GetMessagesAsync().FlattenAsync();
             foreach (var m in messages)
