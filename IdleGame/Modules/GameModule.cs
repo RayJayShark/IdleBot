@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.Linq;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 using Discord;
@@ -35,9 +33,6 @@ namespace IdleGame.Modules
         private uint _tradeTheirAmount;
         private IUserMessage _attackMessage;
         private int _attackIndex;
-
-        private static Player _partyLeader = new BlankCharacter();
-        private static List<Player> _party = new List<Player>();
 
         public GameModule(SqlService sqlService = null)
         {
@@ -567,57 +562,6 @@ namespace IdleGame.Modules
             }
 
             page.SendMessage(Context);
-        }
-
-        [Command("party")]
-        [Alias("group")]
-        public async Task Party()
-        {
-            if (!await CharacterCreated(Context.User.Id))
-                return;
-
-            var player = Program.PlayerList[Context.User.Id];
-            
-            if (_partyLeader.GetId() == 0)
-            {
-                _partyLeader = player;
-                _party.Add(_partyLeader);
-                await ReplyAsync(
-                    $"{_partyLeader.GetName()} has started a new party! Type \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}party\" to join the party!");
-                return;
-            }
-
-            if (_party.Contains(player))
-            {
-                await ReplyAsync("You are already in the party!");
-                return;
-            }
-            
-            _party.Add(player);
-            await ReplyAsync($"Welcome to the party, {player.GetName()}!");
-        }
-
-        [Command("listparty")]
-        [Alias("lparty", "listgroup", "lgroup")]
-        public async Task ListParty()
-        {
-            Console.WriteLine(_party.Count);
-            if (_partyLeader.GetId() == 0)
-            {
-                await ReplyAsync(
-                    $"There is currently no party. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}party\" to start one!");
-                return;
-            }
-
-            var embed = new EmbedBuilder {Title = _partyLeader.GetName() + "'s party"};
-            foreach (var player in _party)
-            {
-                embed.Description += player.GetName() + "\n";
-            }
-            
-            embed.Footer = new EmbedFooterBuilder {Text = "Total: " + _party.Count};
-
-            await ReplyAsync("", false, embed.Build());
         }
         
         [Command("attack")]
