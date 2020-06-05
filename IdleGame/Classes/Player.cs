@@ -16,6 +16,7 @@ namespace IdleGame.Classes
         protected uint Level;
         protected uint CurHp;
         protected uint Exp;
+        protected int Party = -1;
         protected Timestamp Boost = DateTime.UnixEpoch.ToTimestamp();
         public Dictionary<uint, uint> Inventory = new Dictionary<uint, uint>();  //Key = id, Value = quantity
         public PlayerStats Stats;
@@ -80,6 +81,16 @@ namespace IdleGame.Classes
         public uint GetLevel()
         {
             return Level;
+        }
+
+        public int GetParty()
+        {
+            return Party;
+        }
+
+        public void SetParty(int newParty)
+        {
+            Party = newParty;
         }
         
         public Timestamp GetBoost()
