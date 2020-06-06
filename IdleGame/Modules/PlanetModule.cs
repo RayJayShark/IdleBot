@@ -35,6 +35,7 @@ namespace IdleGame.Modules
             _dmList.Add(new List<IDMChannel> {await Context.User.GetOrCreateDMChannelAsync()});
 
             await _dmList.Last()[0].SendMessageAsync("You create a party! Just tell me who to invite.");
+            await _dmList.Last()[0].SendMessageAsync("You created a party! Just tell me who to invite.");
         }
         
         
