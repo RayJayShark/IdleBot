@@ -15,7 +15,7 @@ namespace IdleGame.Modules
     {
         private readonly SqlService _sqlService;
 
-        private static readonly List<List<IDMChannel>> _dmList = new List<List<IDMChannel>>();
+        private static readonly List<Party> _partyList = new List<Party>();
         
         public PlanetModule(SqlService sqlService = null)
         {
@@ -29,13 +29,11 @@ namespace IdleGame.Modules
             var userId = Context.User.Id;
             if (!await CharacterCreated(userId))
                 return;
-            
-            Program.PlayerList[userId].SetParty(_dmList.Count);
 
-            _dmList.Add(new List<IDMChannel> {await Context.User.GetOrCreateDMChannelAsync()});
+            _partyList.Add(new Party(_partyList.Count, Program.PlayerList[userId], Context.Client));
 
-            await _dmList.Last()[0].SendMessageAsync("You create a party! Just tell me who to invite.");
-            await _dmList.Last()[0].SendMessageAsync("You created a party! Just tell me who to invite.");
+            await _partyList.Last().GetDmChannel(userId).SendMessageAsync("You created a party! Just tell me who to invite.");
+        }
         }
         
         
