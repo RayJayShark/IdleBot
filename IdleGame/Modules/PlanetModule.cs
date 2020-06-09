@@ -41,6 +41,44 @@ namespace IdleGame.Modules
 
             await _partyList.Last().GetDmChannel(userId).SendMessageAsync("You created a party! Just tell me who to invite.");
         }
+
+        [Command("invite")]
+        [Remarks("<player name>")]
+        public async Task InvitePlayer([Remainder] string playerName)
+        {
+            if (!Context.Channel.Name.StartsWith('@'))
+                return;
+
+            var userId = Context.User.Id;
+            if (!await CharacterCreated(userId))
+                return;
+            
+            var partyPlayer = Program.PlayerList[Context.User.Id];
+            if (partyPlayer.GetParty() < 0)
+            {
+                await ReplyAsync(
+                    $"You are not in a party. You can start one with the command \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}createparty\"!");
+                return;
+            }
+
+            var player = Program.FindPlayer(playerName);
+            if (player.GetId() == 0)
+            {
+                await ReplyAsync(
+                    $"Could not find player with the name \"{playerName}\". Are you sure that's their player name?");
+                return;
+            }
+
+            if (player.GetParty() >= 0)
+            {
+                await ReplyAsync(
+                    $"**{player.GetName()}** is already in a party. Tell them to leave their party and invite them again.");
+                return;
+            }
+
+            _partyList[partyPlayer.GetParty()].AddInvite(player.GetId());
+            var channel = await Context.Client.GetUser(player.GetId()).GetOrCreateDMChannelAsync();
+            await channel.SendMessageAsync($"**{partyPlayer.GetName()}** has invited you to a party. Would you like to join? Send \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}accept\" or \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}reject\" to reply.");
         }
         
         
