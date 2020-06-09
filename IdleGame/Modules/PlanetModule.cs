@@ -30,7 +30,14 @@ namespace IdleGame.Modules
             if (!await CharacterCreated(userId))
                 return;
 
-            _partyList.Add(new Party(_partyList.Count, Program.PlayerList[userId], Context.Client));
+            var player = Program.PlayerList[userId];
+            if (player.GetParty() >= 0)
+            {
+                await ReplyAsync("You are already in a party.");
+                return;
+            }
+            
+            _partyList.Add(new Party(_partyList.Count, player, Context.Client));
 
             await _partyList.Last().GetDmChannel(userId).SendMessageAsync("You created a party! Just tell me who to invite.");
         }
