@@ -82,6 +82,11 @@ namespace IdleGame
             _invites.Remove(player.GetId());
         }
 
+        public void RejectInvite(ulong playerId)
+        {
+            _invites.Remove(playerId);
+        }
+
         public IDMChannel GetDmChannel(Player player)
         {
             var index = _playerList.FindIndex(p => p.GetId() == player.GetId());
