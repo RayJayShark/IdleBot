@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using IdleGame.Classes;
-using Org.BouncyCastle.Crypto.Digests;
 
 namespace IdleGame
 {
     public class Party
     {
-        private int _id;
-        private List<Player> _playerList;
+        private readonly int _id;
+        private readonly List<Player> _playerList;
 
         public Party(int id)
         {
@@ -22,6 +21,11 @@ namespace IdleGame
             player.SetParty(id);
         }
 
+        public int Count()
+        {
+            return _playerList.Count;
+        }
+        
         public int GetId()
         {
             return _id;
@@ -40,6 +44,12 @@ namespace IdleGame
             _playerList.Add(player);
             player.SetParty(_id);
             return true;
+        }
+
+        public void RemovePlayer(Player player)
+        {
+            if (_playerList.Remove(player))
+                player.SetParty(-1);
         }
     }
 }
