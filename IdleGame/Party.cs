@@ -63,6 +63,22 @@ namespace IdleGame
             player.SetParty(-1);
             
         }
+
+        public IDMChannel GetDmChannel(Player player)
+        {
+            var index = _playerList.FindIndex(p => p.GetId() == player.GetId());
+            return _dmList[index];
+        }
+
+        public IDMChannel GetDmChannel(ulong id)
+        {
+            var index = _playerList.FindIndex(p => p.GetId() == id);
+            return _dmList[index];
+        }
+
+        public IDMChannel GetDmChannel(int index)
+        {
+            return _dmList[index];
         }
     }
 }
