@@ -11,6 +11,7 @@ namespace IdleGame
         private readonly DiscordSocketClient _client;
         private readonly List<Player> _playerList;
         private readonly List<IDMChannel> _dmList;
+        private readonly List<ulong> _invites;
 
         public Party(int id, DiscordSocketClient client)
         {
@@ -18,6 +19,7 @@ namespace IdleGame
             _client = client;
             _playerList = new List<Player>();
             _dmList = new List<IDMChannel>();
+            _invites = new List<ulong>();
         }
 
         public Party(int id, Player player, DiscordSocketClient client)
@@ -26,6 +28,7 @@ namespace IdleGame
             _client = client;
             _playerList = new List<Player> {player};
             _dmList = new List<IDMChannel> { _client.GetUser(player.GetId()).GetOrCreateDMChannelAsync().Result };
+            _invites = new List<ulong>();
             player.SetParty(id);
         }
 
@@ -61,7 +64,22 @@ namespace IdleGame
             _playerList.RemoveAt(index);
             _dmList.RemoveAt(index);
             player.SetParty(-1);
-            
+        }
+
+        public void AddInvite(ulong playerId)
+        {
+            if (!_invites.Contains(playerId))
+            {
+                _invites.Add(playerId);
+            }
+        }
+
+        public void AcceptInvite(Player player)
+        {
+            if (!_invites.Contains(player.GetId()))
+                return;
+            AddPlayer(player);
+            _invites.Remove(player.GetId());
         }
 
         public IDMChannel GetDmChannel(Player player)
