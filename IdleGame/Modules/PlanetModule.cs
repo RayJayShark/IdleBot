@@ -54,8 +54,32 @@ namespace IdleGame.Modules
         
         
         
-        //TODO: Leave party
-        
+
+
+
+        [Command("leaveparty")]
+        [Alias("leave")]
+        public async Task LeaveParty()
+        {
+            var userId = Context.User.Id;
+            if (!await CharacterCreated(userId))
+                return;
+            
+            var partyPlayer = Program.PlayerList[userId];
+            var partyIndex = partyPlayer.GetParty();
+            if (partyIndex < 0)
+            {
+                await ReplyAsync(
+                    $"You are not in a party. You can start one with the command \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}createparty\"!");
+                return;
+            }
+            
+            _partyList[partyIndex].RemovePlayer(partyPlayer);
+            if (_partyList[partyIndex].Count() == 0)
+            {
+                _partyList.RemoveAt(partyIndex);
+            }
+        }
         
         private async Task<bool> CharacterCreated(ulong userId)
         {
