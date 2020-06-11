@@ -84,19 +84,37 @@ namespace IdleGame.Modules
             await channel.SendMessageAsync($"**{partyPlayer.GetName()}** has invited you to a party. Would you like to join? Send \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}accept\" or \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}reject\" to reply.");
         }
         
-        
-        
-        
-        //TODO: Invite to party
-        
-        
-        
-        //TODO: Join party
-        
-        
-        
+        [Command("accept")]
+        public async Task AcceptInvite()
+        {
+            if (!Context.Channel.Name.StartsWith('@'))
+                return;
 
+            var player = Program.PlayerList[Context.User.Id];
+            if (player.GetParty() >= 0)
+            {
+                await ReplyAsync(
+                    $"You are already in a party. Use \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}leave\" to leave your current party.");
+                return;
+            }
 
+            foreach (var party in _partyList)
+            {
+                if (party.AcceptInvite(player))
+                {
+                    foreach (var playerDm in party.GetAllDmChannels())
+                    {
+                        await playerDm.SendMessageAsync($"**{player.GetName()}** has joined the party!");
+                    }
+
+                    return;
+                }
+            }
+
+            await ReplyAsync("You haven't been invited to a party. Tell a friend to invite you!");
+        }
+
+        //TODO: Reject invite
 
         [Command("leaveparty")]
         [Alias("leave")]
