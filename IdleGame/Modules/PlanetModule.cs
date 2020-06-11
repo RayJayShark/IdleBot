@@ -82,6 +82,7 @@ namespace IdleGame.Modules
             _partyList[partyPlayer.GetParty()].AddInvite(player.GetId());
             var channel = await Context.Client.GetUser(player.GetId()).GetOrCreateDMChannelAsync();
             await channel.SendMessageAsync($"**{partyPlayer.GetName()}** has invited you to a party. Would you like to join? Send \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}accept\" or \"{Environment.GetEnvironmentVariable("COMMAND_PREFIX")}reject\" to reply.");
+            await ReplyAsync($"An invitation has been sent to **{player.GetName()}**");
         }
         
         [Command("accept")]
