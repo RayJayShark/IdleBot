@@ -115,7 +115,20 @@ namespace IdleGame.Modules
             await ReplyAsync("You haven't been invited to a party. Tell a friend to invite you!");
         }
 
-        //TODO: Reject invite
+        [Command("reject")]
+        public async Task RejectInvite()
+        {
+            var userId = Context.User.Id;
+            if (!Context.Channel.Name.StartsWith('@') || !await CharacterCreated(userId))
+                return;
+
+            foreach (var party in _partyList)
+            {
+                party.RejectInvite(userId);
+            }
+
+            await ReplyAsync("All party invites rejected.");
+        }
 
         [Command("leaveparty")]
         [Alias("leave")]
