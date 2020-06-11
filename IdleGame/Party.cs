@@ -74,12 +74,13 @@ namespace IdleGame
             }
         }
 
-        public void AcceptInvite(Player player)
+        public bool AcceptInvite(Player player)
         {
             if (!_invites.Contains(player.GetId()))
-                return;
+                return false;
             AddPlayer(player);
             _invites.Remove(player.GetId());
+            return true;
         }
 
         public void RejectInvite(ulong playerId)
