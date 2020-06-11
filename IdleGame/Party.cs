@@ -88,6 +88,11 @@ namespace IdleGame
             _invites.Remove(playerId);
         }
 
+        public IDMChannel[] GetAllDmChannels()
+        {
+            return _dmList.ToArray();
+        }
+
         public IDMChannel GetDmChannel(Player player)
         {
             var index = _playerList.FindIndex(p => p.GetId() == player.GetId());
