@@ -47,7 +47,10 @@ namespace IdleGame.Modules
         public async Task InvitePlayer([Remainder] string playerName)
         {
             if (!Context.Channel.Name.StartsWith('@'))
+            {
+                await ReplyAsync("Players must be invited to your party through a DM command.");
                 return;
+            }
 
             var userId = Context.User.Id;
             if (!await CharacterCreated(userId))
