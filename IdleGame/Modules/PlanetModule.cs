@@ -152,6 +152,12 @@ namespace IdleGame.Modules
             {
                 _partyList.RemoveAt(partyIndex);
             }
+            
+            await ReplyAsync($"You have successfully left the party.");
+            foreach (var dmChannel in _partyList[partyIndex].GetAllDmChannels())
+            {
+                await dmChannel.SendMessageAsync($"**{partyPlayer.GetName()}** has left the party.");
+            }
         }
         
         private async Task<bool> CharacterCreated(ulong userId)
