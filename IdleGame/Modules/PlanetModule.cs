@@ -87,10 +87,11 @@ namespace IdleGame.Modules
         [Command("accept")]
         public async Task AcceptInvite()
         {
-            if (!Context.Channel.Name.StartsWith('@'))
+            var userId = Context.User.Id;
+            if (!Context.Channel.Name.StartsWith('@') || !await CharacterCreated(userId))
                 return;
 
-            var player = Program.PlayerList[Context.User.Id];
+            var player = Program.PlayerList[userId];
             if (player.GetParty() >= 0)
             {
                 await ReplyAsync(
